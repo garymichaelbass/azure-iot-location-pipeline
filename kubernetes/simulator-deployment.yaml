@@ -1,0 +1,41 @@
+# azure-iot-location-monitoring\kubernetes\simulator-deployment.yaml     
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iot-simulator
+  labels:
+    app: iot-simulator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: iot-simulator
+  template:
+    metadata:
+      labels:
+        app: iot-simulator
+    spec:
+      containers:
+      - name: simulator
+        # Replace <your-registry> with your actual container registry path
+        image: <your-registry>/iot-simulator:latest
+        env:
+        - name: IOTHUB_DEVICE_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: iot-credentials
+              key: device-connection-string
+        - name: IOT_SIMULATOR_DEVICE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: iot-credentials
+              key: iot-simulator-device-name
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+        imagePullPolicy: Always

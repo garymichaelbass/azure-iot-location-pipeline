@@ -1,0 +1,61 @@
+# Terraform state and plan files
+./terraform
+
+terraform/*.output.*
+terraform/*.state.*
+terraform/*.tfstate
+terraform/*.tfstate.*
+
+terraform/*.tfplan
+terraform/*.tfstate
+terraform/*.tfstate.backup
+
+terraform/*_output_pass*.txt
+terraform/*_output_c_*.txt
+terraform/*.gmb.txt
+
+terraform/.terraform.lock.hcl
+terraform/plan.txt
+terraform/plan_*
+
+terraform/TmpGmbWorkspace
+
+# Terraform internal working directory
+terraform/.terraform/
+terraform/modules/**/.terraform/
+
+# Credentials (DO NOT COMMIT)
+azure-creds.json
+
+# Python bytecode and cache
+iot-simulator/__pycache__/
+iot-simulator/*.pyc
+
+# Docker build artifacts (optional)
+iot-simulator/*.log
+
+# Jupyter or Databricks notebooks (if auto-generated)
+terraform/modules/databricks/*.dbc
+terraform/modules/databricks/notebook.pyc
+
+# VS Code or JetBrains IDEs (optional)
+*.swp
+.vscode/
+.idea/
+
+Virtual Environments
+.venv/
+venv/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Excel temporary files (from Excel autosave)
+*.csv
+*.xlsx
+*~$*.xlsx
+
+# Backup or temporary files
+*.bak
+*.tmp

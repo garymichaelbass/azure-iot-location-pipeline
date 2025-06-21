@@ -1,0 +1,32 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:  # Manual trigger from GitHub UI
+
+jobs:
+  destroy:
+    runs-on: ubun"tu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+          terraform_version: 1.8.x # Match your deployment workflow's version
+
+    - name: Terraform Init
+      run: |
+        cd terraform
+        terraform init
+
+    - name: Terraform Destroy
+      run: |
+        cd terraform
+        terraform destroy -auto-approve

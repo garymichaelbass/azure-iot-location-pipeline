@@ -1,0 +1,77 @@
+# azure-iot-location-monitoring\terraform\modules\databricks\notebook.py
+
+# Databricks notebook to read from Event Hub and write to Cosmos DB
+
+# Import necessary types for defining the schema of the incoming data
+from pyspark.sql.types import StructType, StringType, DoubleType, LongType
+# Import functions for data transformation, specifically for parsing JSON
+from pyspark.sql.functions import from_json, col
+
+# Define the schema for the incoming JSON data from Event Hub.
+# This schema dictates the structure and data types of the telemetry messages
+# that are expected from the IoT devices.
+schema = StructType() \
+    .add("deviceId", StringType()) \
+    .add("latitude", DoubleType()) \
+    .add("longitude", DoubleType()) \
+    .add("timestamp", LongType())
+
+# Configure the connection details for Azure Event Hubs.
+# The 'eventhubs.connectionString' parameter is crucial and must be replaced
+# with the actual Event Hub-compatible connection string, which grants access
+# to read messages from the Event Hub.
+ehConf = {
+    'eventhubs.connectionString': var.eventhub_connection_string
+}
+
+# Read streaming data from Azure Event Hubs.
+# 'spark.readStream' initiates a streaming DataFrame, and '.format("eventhubs")'
+# specifies the source. The options are passed from the `ehConf` dictionary.
+# This DataFrame (`raw_df`) will initially contain raw Event Hub messages,
+# where the actual data payload is typically in the 'body' column.
+try:
+    spark
+except NameError:
+    from pyspark.sql import SparkSession
+    spark = SparkSession.builder.getOrCreate()
+    
+raw_df = spark.readStream \
+    .format("eventhubs") \
+    .options(**ehConf) \
+    .load()
+
+# Parse the raw Event Hub message body, which is a binary string, into a structured JSON format.
+# The 'body' column is first cast to a string, then 'from_json' is used to parse it
+# according to the predefined `schema`. The parsed data is aliased as "data",
+# and then '.select("data.*")' flattens the nested structure to bring all fields
+# directly into the `json_df` DataFrame.
+json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
+
+# Configure the connection and write details for Azure Cosmos DB.
+# This dictionary specifies where and how the processed data will be written.
+# - "Endpoint": The URI of your Azure Cosmos DB account.
+# - "Masterkey": The primary key for your Cosmos DB account (securely managed, not hardcoded in production).
+# - "Database": The name of the Cosmos DB database to write to.
+# - "Collection": The name of the Cosmos DB container (collection) within the specified database.
+# - "Upsert": "true" means that if a document with the same ID already exists, it will be updated;
+#             otherwise, a new document will be inserted.
+cosmos_config = {
+    "Endpoint": var.cosmos_db_endpoint,
+    "Masterkey": var.cosmos_db_key,
+    "Database": "LocationDB",
+    "Collection": "DeviceLocations",
+    "Upsert": "true"
+}
+
+# Write the processed streaming data from `json_df` to Azure Cosmos DB.
+# '.writeStream' indicates a continuous write operation.
+# '.format("cosmos.oltp")' specifies the Cosmos DB connector for OLTP (transactional) workloads.
+# '.options(**cosmos_config)' applies the defined Cosmos DB connection and write settings.
+# '.outputMode("append")' specifies that new records are continuously appended to Cosmos DB.
+# '.start()' initiates the streaming job. This job will run continuously, reading from Event Hub,
+# parsing messages, and writing them to the specified Cosmos DB collection.
+json_df.writeStream \
+    .format("cosmos.oltp") \
+    .options(**cosmos_config) \
+    .outputMode("append") \
+    .start()
