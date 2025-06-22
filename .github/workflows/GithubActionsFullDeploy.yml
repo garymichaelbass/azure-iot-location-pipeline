@@ -47,32 +47,9 @@ jobs:
           echo "Resource group not found—skipping import."
         working-directory: ./terraform
 
-      - name: Detect and force-unlock if Terraform lock is active
-        if: always()
-        shell: bash
-        run: |
-          echo "🔍 Checking for active Terraform state lock..."
-
-          PLAN_OUTPUT=$(terraform plan -lock=false -detailed-exitcode 2>&1 || true)
-
-          if echo "$PLAN_OUTPUT" | grep -q 'state blob is already locked'; then
-            LOCK_ID=$(echo "$PLAN_OUTPUT" | grep -o 'ID: .*' | awk '{print $2}')
-            echo "💡 Found lock ID: $LOCK_ID — attempting unlock..."
-            terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Unlock failed or lock already cleared."
-          else
-            echo "✅ No active lock detected. Proceeding."
-          fi
-        working-directory: ./terraform
-        env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-
       - name: Terraform Apply
         id: apply
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -lock=false
         working-directory: ./terraform
         env:
           TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
