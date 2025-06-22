@@ -40,6 +40,13 @@ jobs:
         run: terraform init
         working-directory: ./terraform
 
+      - name: Conditionally import resource group if it exists
+        run: |
+          az group show --name iot-location-rg --output none 2>/dev/null && \
+            terraform import azurerm_resource_group.iot_resource_group "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/iot-location-rg" || \
+            echo "Resource group not found—skipping import."
+        working-directory: ./terraform
+        
       - name: Terraform Apply
         id: apply
         run: |
