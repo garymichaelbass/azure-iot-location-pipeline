@@ -47,6 +47,31 @@ jobs:
             echo "Resource group not found—skipping import."
         working-directory: ./terraform
 
+      - name: Force Unlock Terraform State (if needed)
+        if: always()
+        run: |
+          echo "🔍 Checking for stale Terraform lock in backend..."
+
+          LOCK_ID=$(az storage blob metadata show \
+            --container-name tfstate \
+            --name iot-solution.tfstate \
+            --account-name iotlocationmon20250621 \
+            --query metadata.terraformlockid \
+            --output tsv 2>/dev/null || echo "")
+
+          if [ -n "$LOCK_ID" ]; then
+            echo "💡 Found lock ID: $LOCK_ID — attempting unlock..."
+            terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Unlock command failed or lock already cleared."
+          else
+            echo "✅ No active lock detected. Moving on."
+          fi
+        working-directory: ./terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
       - name: Terraform Apply
         id: apply
         run: terraform apply -auto-approve
