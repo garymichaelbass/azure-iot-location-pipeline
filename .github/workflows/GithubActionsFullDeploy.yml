@@ -46,21 +46,21 @@ jobs:
           terraform import azurerm_resource_group.iot_resource_group "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/iot-location-rg" ||
           echo "Resource group not found—skipping import."
         working-directory: ./terraform
-        
-      - name: Check and force-unlock if state is locked
+
+      - name: Detect and force-unlock if Terraform lock is active
         if: always()
         shell: bash
         run: |
-          echo "🔍 Checking for Terraform state lock..."
+          echo "🔍 Checking for active Terraform state lock..."
 
-          LOCK_INFO=$(terraform state pull 2>&1 || true)
+          PLAN_OUTPUT=$(terraform plan -lock=false -detailed-exitcode 2>&1 || true)
 
-          if echo "$LOCK_INFO" | grep -q 'state blob is already locked'; then
-            LOCK_ID=$(echo "$LOCK_INFO" | grep -o 'ID: .*' | awk '{print $2}')
+          if echo "$PLAN_OUTPUT" | grep -q 'state blob is already locked'; then
+            LOCK_ID=$(echo "$PLAN_OUTPUT" | grep -o 'ID: .*' | awk '{print $2}')
             echo "💡 Found lock ID: $LOCK_ID — attempting unlock..."
-            terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Unlock command failed or lock already cleared."
+            terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Unlock failed or lock already cleared."
           else
-            echo "✅ No active lock detected. Moving on."
+            echo "✅ No active lock detected. Proceeding."
           fi
         working-directory: ./terraform
         env:
@@ -68,6 +68,7 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
 
       - name: Terraform Apply
         id: apply
