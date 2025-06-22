@@ -42,7 +42,12 @@ jobs:
 
       - name: Terraform Apply
         id: apply
-        run: terraform apply -auto-approve
+        run: |
+          terraform apply -auto-approve \
+            -var="github_client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -var="github_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+            -var="github_tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
+            -var="github_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
         working-directory: ./terraform
 
       # --- 2. Extract Outputs from Terraform ---
