@@ -89,6 +89,36 @@ jobs:
         working-directory: ./terraform
         # `env` variables for ARM_CLIENT_ID etc. are inherited from the job level, which is sufficient here.
 
+      - name: Force Unlock State (preemptive before apply)
+        if: always()
+        shell: bash
+        run: |
+          echo "🔐 Checking Azure Storage metadata for stale Terraform lock..."
+
+          STORAGE_ACCOUNT="iotlocationmon20250621"
+          CONTAINER_NAME="tfstate"
+          STATE_BLOB="iot-solution.tfstate"
+
+          LOCK_ID=$(az storage blob metadata show \
+            --account-name "$STORAGE_ACCOUNT" \
+            --container-name "$CONTAINER_NAME" \
+            --name "$STATE_BLOB" \
+            --query "metadata.terraformlockid" \
+            --output tsv 2>/dev/null || echo "")
+
+          if [ -n "$LOCK_ID" ]; then
+            echo "💡 Found existing lock ID: $LOCK_ID — forcing unlock..."
+            terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Unlock failed or already cleared."
+          else
+            echo "✅ No stale lock found. Proceeding to apply."
+          fi
+        working-directory: ./terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        
       - name: Terraform Apply
         id: apply
         run: terraform apply -auto-approve
