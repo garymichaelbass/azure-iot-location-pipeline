@@ -5,7 +5,7 @@ on:
 
 jobs:
   destroy:
-    runs-on: ubun"tu-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
