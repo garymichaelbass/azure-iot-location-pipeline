@@ -40,27 +40,6 @@ jobs:
         run: terraform init
         working-directory: ./terraform
 
-      - name: Conditionally import resource group if it exists
-        run: |
-          RG_NAME="iot-location-rg" # Consider making this a job variable or deriving from TF output
-          SUB_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-
-          # Check if RG exists in Azure AND is NOT in Terraform state, then import.
-          # `terraform state list -id` checks if a specific resource is in state without listing all.
-          az group show --name "$RG_NAME" --output none 2>/dev/null && \
-          (terraform state list -id="azurerm_resource_group.iot_resource_group" &>/dev/null || \
-           terraform import azurerm_resource_group.iot_resource_group "/subscriptions/$SUB_ID/resourceGroups/$RG_NAME") || \
-          echo "Resource group '$RG_NAME' does not exist in Azure or is already in state."
-        working-directory: ./terraform
-        shell: bash {0} # Explicitly use bash for better shell scripting robustness
-        env: # <--- ADDED/COPIED THIS ENV BLOCK HERE
-          TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
-          TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-          TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-          TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          # ARM credentials are inherited from the job's env block, so no need to repeat here
-          # unless you specifically want to override them for this step.
-
       - name: Force Unlock Terraform State (on failure/cancel with specific ID)
         if: ${{ failure() || cancelled() }} # This condition checks the overall job status
         run: |
@@ -152,6 +131,27 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          
+      - name: Conditionally import resource group if it exists
+        run: |
+          RG_NAME="iot-location-rg" # Consider making this a job variable or deriving from TF output
+          SUB_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+
+          # Check if RG exists in Azure AND is NOT in Terraform state, then import.
+          # `terraform state list -id` checks if a specific resource is in state without listing all.
+          az group show --name "$RG_NAME" --output none 2>/dev/null && \
+          (terraform state list -id="azurerm_resource_group.iot_resource_group" &>/dev/null || \
+           terraform import azurerm_resource_group.iot_resource_group "/subscriptions/$SUB_ID/resourceGroups/$RG_NAME") || \
+          echo "Resource group '$RG_NAME' does not exist in Azure or is already in state."
+        working-directory: ./terraform
+        shell: bash {0} # Explicitly use bash for better shell scripting robustness
+        env: # <--- ADDED/COPIED THIS ENV BLOCK HERE
+          TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+          TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+          TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          # ARM credentials are inherited from the job's env block, so no need to repeat here
+          # unless you specifically want to override them for this step.
 
       - name: Terraform Apply
         id: apply
