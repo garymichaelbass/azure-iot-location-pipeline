@@ -165,6 +165,15 @@ Create `terraform/terraform.tfvars.json`:
 
 **Remember to replace all placeholders `<YOUR_UNIQUE_SUFFIX>`, `<YOUR_AZURE_SUBSCRIPTION_ID>`, and `<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>` with your actual values.**
 
+For appopriate permissions allowing GitHub to access Azure, add the following four Repository secrets via Settings -> Secrets and variables -> Actions. Please note, when enterring these into GitHub, omit the beginning and ending double-quotes from the value.
+
+- AZURE_CLIENT_ID
+- AZURE_CLIENT_SECRET
+- AZURE_SUBSCRIPTION_ID
+- AZURE_TENANT_ID
+
+Customize your Azure resource names and locations by creating a `terraform.tfvars.json` file in the `terraform/` directory. This file is ignored by Git, so it's safe for local values. Feel free to use the `terraform/terraform.tfvars.json.template` as a reference.
+
 ### 5\. Initial Terraform Apply (Local - Optional but Recommended)
 
 It's often a good idea to perform an initial `terraform apply` locally to ensure all providers are correctly configured and to handle any one-time issues (like importing existing resources or the two-phase Databricks deployment).

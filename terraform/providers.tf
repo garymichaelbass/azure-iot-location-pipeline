@@ -30,6 +30,23 @@ terraform {
 
 provider "azurerm" {
   features {}
+
+  /* 
+  # These values come from the terraform.tfvars.json file created from the following command:
+  # az ad sp create-for-rbac --name "github-iot-acr-pusher" --role contributor --scopes /subscriptions/<your-subscription-id> --sdk-auth 
+  {
+	  "github_client_id": "your-value-here",
+    "github_client_secret": "your-value-here",
+    "github_tenant_id": "your-value-here",
+    "github_subscription_id": "your-value-here"
+  } 
+  */
+
+  client_id       = var.github_client_id
+  client_secret   = var.github_client_secret
+  tenant_id       = var.github_tenant_id
+  subscription_id = var.github_subscription_id
+
 }
 
 

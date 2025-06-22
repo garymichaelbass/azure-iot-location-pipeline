@@ -18,6 +18,8 @@ terraform/.terraform.lock.hcl
 terraform/plan.txt
 terraform/plan_*
 
+terraform/terraform.tfvars.json
+
 terraform/TmpGmbWorkspace
 
 # Terraform internal working directory
