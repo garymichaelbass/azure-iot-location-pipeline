@@ -119,6 +119,40 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         
+      - name: Force break Azure Blob lease if locked
+        if: always()
+        shell: bash
+        run: |
+          echo "🔐 Checking blob lease status..."
+
+          STORAGE_ACCOUNT="iotlocationmon20250621"
+          CONTAINER_NAME="tfstate"
+          STATE_BLOB="iot-solution.tfstate"
+
+          LEASE_STATE=$(az storage blob show \
+            --account-name "$STORAGE_ACCOUNT" \
+            --container-name "$CONTAINER_NAME" \
+            --name "$STATE_BLOB" \
+            --query "properties.lease.state" \
+            --output tsv)
+
+          if [ "$LEASE_STATE" == "leased" ]; then
+            echo "💡 Blob is leased — breaking lease to unlock state..."
+            az storage blob lease break \
+              --account-name "$STORAGE_ACCOUNT" \
+              --container-name "$CONTAINER_NAME" \
+              --blob "$STATE_BLOB" \
+              --output none || echo "⚠️ Lease break failed or already cleared."
+          else
+            echo "✅ Blob is not currently leased. No unlock needed."
+          fi
+        working-directory: ./terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
       - name: Terraform Apply
         id: apply
         run: terraform apply -auto-approve
