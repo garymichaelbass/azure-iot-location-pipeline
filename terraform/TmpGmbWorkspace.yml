@@ -3,12 +3,7 @@
 name: GitHub Actions Full IoT Solution Deployment
 
 on:
-  workflow_dispatch:  # Manual trigger from GitHub UI
-
-# Change to this after debugging...
-# on:
-#   push:
-#     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   deploy-solution:
