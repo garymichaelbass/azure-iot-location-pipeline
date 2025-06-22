@@ -40,42 +40,55 @@ jobs:
         run: terraform init
         working-directory: ./terraform
 
-      - name: Check and force-unlock if state is locked
-        shell: bash
+      - name: Force Unlock Terraform State (on failure/cancel with specific ID)
+        # This step runs ONLY if a previous step (like 'Terraform Apply') failed or was cancelled.
+        # This is the most reliable placement for cleaning up orphaned locks.
+        if: ${{ failure() || cancelled() }}
+        
         run: |
-          echo "🔍 Checking if Terraform state is locked..."
+          echo "Attempting to find and force unlock the Terraform state lock ID..."
 
-          # Try to pull the state (this will fail if locked)
-          LOCK_INFO=$(terraform state pull 2>&1 || true)
+          # --- Backend configuration details from your backend.tf ---
+          # These values MUST match your backend.tf exactly
+          TF_BACKEND_ACCOUNT_NAME="iotlocationmon20250621"
+          TF_BACKEND_CONTAINER_NAME="tfstate"
+          TF_STATE_BLOB_KEY="iot-solution.tfstate" # This is the 'key' from your backend.tf
 
-          # Check for lock message
-          if echo "$LOCK_INFO" | grep -q 'state blob is already locked'; then
-            # Extract the lock ID from the error message
-            LOCK_ID=$(echo "$LOCK_INFO" | grep -oE 'ID: [a-f0-9-]+' | awk '{print $2}')
+          # Ensure Azure CLI is logged in. The 'azure/login@v1' step earlier usually
+          # takes care of this for the whole job, but it's good to be aware.
 
-            if [ -n "$LOCK_ID" ]; then
-              echo "💡 Found lock ID: $LOCK_ID — attempting to force unlock..."
-              terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Unlock failed or lock already cleared."
-            else
-              echo "⚠️ Lock ID not found in state pull output — cannot unlock."
-              exit 1
-            fi
+          # --- Attempt to get the lock ID from Azure Storage Blob metadata ---
+          # This command queries the Azure storage blob for its metadata.
+          # The 'terraformlockid' is a piece of metadata that Terraform writes when it acquires a lock.
+          LOCK_ID=$(az storage blob metadata show \
+            --account-name "$TF_BACKEND_ACCOUNT_NAME" \
+            --container-name "$TF_BACKEND_CONTAINER_NAME" \
+            --name "$TF_STATE_BLOB_KEY" \
+            --query "metadata.terraformlockid" \
+            --output tsv 2>/dev/null) # 2>/dev/null suppresses errors if blob/metadata not found
+
+          if [ -n "$LOCK_ID" ]; then
+            echo "💡 Found active lock ID: $LOCK_ID from Azure Storage metadata. Attempting force unlock..."
+            # Execute the force-unlock command with the retrieved ID and the -force option
+            # The || true ensures this cleanup step doesn't fail the workflow if unlock doesn't find the lock
+            terraform force-unlock -force "$LOCK_ID" || {
+              echo "⚠️ Warning: terraform force-unlock failed for ID $LOCK_ID. It might already be cleared or another issue exists."
+              # If you want to stop the workflow if the force-unlock specifically fails, uncomment the line below:
+              # exit 1
+            }
+            echo "✅ Terraform force-unlock command completed for ID: $LOCK_ID."
           else
-            echo "✅ No active lock detected."
+            echo "✅ No active lock ID found in Azure Storage metadata for '$TF_STATE_BLOB_KEY'. No unlock needed."
           fi
-        working-directory: ./terraform
+        working-directory: ./terraform # Ensure this is the directory containing your backend.tf
         env:
+          # These environment variables are crucial for 'az storage' commands
+          # to authenticate to Azure to read blob metadata.
+          # They are also used by terraform to interact with the backend.
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-      - name: Conditionally import resource group if it exists
-        run: |
-          az group show --name iot-location-rg --output none 2>/dev/null &&
-          terraform import azurerm_resource_group.iot_resource_group "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/iot-location-rg" ||
-          echo "Resource group not found—skipping import."
-        working-directory: ./terraform
 
       - name: Terraform Apply
         id: apply
