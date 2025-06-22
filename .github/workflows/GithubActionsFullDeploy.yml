@@ -46,20 +46,17 @@ jobs:
           terraform import azurerm_resource_group.iot_resource_group "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/iot-location-rg" ||
           echo "Resource group not found—skipping import."
         working-directory: ./terraform
-
-      - name: Force Unlock Terraform State (if needed)
+        
+      - name: Check and force-unlock if state is locked
         if: always()
+        shell: bash
         run: |
-          echo "🔍 Checking for stale Terraform lock in backend..."
+          echo "🔍 Checking for Terraform state lock..."
 
-          LOCK_ID=$(az storage blob metadata show \
-            --container-name tfstate \
-            --name iot-solution.tfstate \
-            --account-name iotlocationmon20250621 \
-            --query metadata.terraformlockid \
-            --output tsv 2>/dev/null || echo "")
+          LOCK_INFO=$(terraform state pull 2>&1 || true)
 
-          if [ -n "$LOCK_ID" ]; then
+          if echo "$LOCK_INFO" | grep -q 'state blob is already locked'; then
+            LOCK_ID=$(echo "$LOCK_INFO" | grep -o 'ID: .*' | awk '{print $2}')
             echo "💡 Found lock ID: $LOCK_ID — attempting unlock..."
             terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Unlock command failed or lock already cleared."
           else
