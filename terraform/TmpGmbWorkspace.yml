@@ -1,22 +1,16 @@
-# azure-iot-location-monitoring\.github\workflows\GithubActionsFullDeploy.yml
-
-name: GitHub Actions Full IoT Solution Deployment
-
-on:
-  workflow_dispatch:
-
 jobs:
   deploy-solution:
     runs-on: ubuntu-latest
+    timeout-minutes: 60 # Good practice
 
     env:
+      # These apply to all steps in this job unless overridden
       ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
     steps:
-      # --- 1. Terraform Infrastructure Deployment ---
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -37,35 +31,52 @@ jobs:
 
       - name: Conditionally import resource group if it exists
         run: |
-          az group show --name iot-location-rg --output none 2>/dev/null &&
-          terraform import azurerm_resource_group.iot_resource_group "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/iot-location-rg" ||
-          echo "Resource group not found—skipping import."
-        working-directory: ./terraform
+          RG_NAME="iot-location-rg" # Consider making this a job variable or deriving from TF output
+          SUB_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
-      - name: Force Unlock Terraform State (if needed)
-        if: always()
+          # Check if RG exists in Azure AND is NOT in Terraform state, then import.
+          # `terraform state list -id` checks if a specific resource is in state without listing all.
+          az group show --name "$RG_NAME" --output none 2>/dev/null && \
+          (terraform state list -id="azurerm_resource_group.iot_resource_group" &>/dev/null || \
+           terraform import azurerm_resource_group.iot_resource_group "/subscriptions/$SUB_ID/resourceGroups/$RG_NAME") || \
+          echo "Resource group '$RG_NAME' does not exist in Azure or is already in state."
+        working-directory: ./terraform
+        shell: bash {0} # Explicitly use bash for better shell scripting robustness
+        env: # <--- ADDED/COPIED THIS ENV BLOCK HERE
+          TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+          TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+          TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          # ARM credentials are inherited from the job's env block, so no need to repeat here
+          # unless you specifically want to override them for this step.
+
+      - name: Force Unlock Terraform State (on failure/cancel with specific ID)
+        if: ${{ failure() || cancelled() }} # This condition checks the overall job status
         run: |
-          echo "🔍 Checking for stale Terraform lock in backend..."
+          echo "Attempting to find and force unlock the Terraform state lock ID..."
+
+          TF_BACKEND_ACCOUNT_NAME="iotlocationmon20250621"
+          TF_BACKEND_CONTAINER_NAME="tfstate"
+          TF_STATE_BLOB_KEY="iot-solution.tfstate"
 
           LOCK_ID=$(az storage blob metadata show \
-            --container-name tfstate \
-            --name iot-solution.tfstate \
-            --account-name iotlocationmon20250621 \
-            --query metadata.terraformlockid \
-            --output tsv 2>/dev/null || echo "")
+            --account-name "$TF_BACKEND_ACCOUNT_NAME" \
+            --container-name "$TF_BACKEND_CONTAINER_NAME" \
+            --name "$TF_STATE_BLOB_KEY" \
+            --query "metadata.terraformlockid" \
+            --output tsv 2>/dev/null)
 
           if [ -n "$LOCK_ID" ]; then
-            echo "💡 Found lock ID: $LOCK_ID — attempting unlock..."
-            terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Unlock command failed or lock already cleared."
+            echo "💡 Found active lock ID: $LOCK_ID from Azure Storage metadata. Attempting force unlock..."
+            terraform force-unlock -force "$LOCK_ID" || {
+              echo "⚠️ Warning: terraform force-unlock failed for ID $LOCK_ID. It might already be cleared or another issue exists."
+            }
+            echo "✅ Terraform force-unlock command completed for ID: $LOCK_ID."
           else
-            echo "✅ No active lock detected. Moving on."
+            echo "✅ No active lock ID found in Azure Storage metadata for '$TF_STATE_BLOB_KEY'. No unlock needed."
           fi
         working-directory: ./terraform
-        env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        # `env` variables for ARM_CLIENT_ID etc. are inherited from the job level, which is sufficient here.
 
       - name: Terraform Apply
         id: apply
@@ -76,84 +87,6 @@ jobs:
           TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
           TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          # ARM credentials are inherited from the job's env block.
 
-      # --- 2. Extract Outputs from Terraform ---
-      - name: Get Terraform Outputs (all except for IOTHUB_DEVICE_CONNECTION_STRING)
-        id: terraform_outputs
-        run: |
-          TERRAFORM_OUTPUTS=$(terraform output -json)
-          echo "IOT_SIMULATOR_DEVICE_NAME=$(echo $TERRAFORM_OUTPUTS | jq -r '.iot_simulator_device_name.value')" >> $GITHUB_OUTPUT
-          echo "AKS_KUBECFG=$(echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value' | base64 -w 0)" >> $GITHUB_OUTPUT
-          echo "ACR_LOGIN_SERVER=$(echo $TERRAFORM_OUTPUTS | jq -r '.acr_login_server.value')" >> $GITHUB_OUTPUT
-        working-directory: ./terraform
-
-      - name: Get IoT device connection string via Azure CLI
-        id: get_conn_str
-        run: |
-          conn_str=$(az iot hub device-identity connection-string show \
-            --device-id ${{ steps.terraform_outputs.outputs.IOT_SIMULATOR_DEVICE_NAME }} \
-            --hub-name ${{ steps.terraform_outputs.outputs.IOTHUB_NAME }} \
-            --resource-group ${{ steps.terraform_outputs.outputs.RESOURCE_GROUP_NAME }} \
-            --query connectionString -o tsv)
-          echo "IOTHUB_DEVICE_CONNECTION_STRING=$conn_str" >> $GITHUB_OUTPUT
-
-      # --- 3. Docker Image Build and Push ---
-      - name: Log in to Azure Container Registry
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}
-          username: ${{ secrets.AZURE_CLIENT_ID }}
-          password: ${{ secrets.AZURE_CLIENT_SECRET }}
-
-      - name: Build and Tag Docker image
-        run: docker build -t ${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}/iot-simulator:latest ./iot-simulator/
-
-      - name: Push image to Azure Container Registry
-        run: docker push ${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}/iot-simulator:latest
-
-      # --- 4. Inject ACR login server into simulator-deployment.yaml ---
-      - name: Inject ACR login server into Kubernetes manifest
-        run: |
-          ACR=${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}
-          sed -i "s|<your-registry>|$ACR|g" ./kubernetes/simulator-deployment.yaml
-
-      # --- 5. Kubernetes Deployment ---
-      - name: Set up Kubeconfig for AKS
-        run: |
-          echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > kubeconfig.yaml
-          chmod 600 kubeconfig.yaml
-          mkdir -p ~/.kube
-          mv kubeconfig.yaml ~/.kube/config
-
-      - name: Debug - Check Kubeconfig (OPTIONAL)
-        run: |
-          ls -l ~/.kube/
-          cat ~/.kube/config
-          kubectl get nodes
-
-      - name: Create Kubernetes Secret for IoT Simulator
-        run: |
-          echo -n "${{ steps.terraform_outputs.outputs.IOTHUB_DEVICE_CONNECTION_STRING }}" | base64 -w 0 > conn_str_b64.txt
-          echo -n "${{ steps.terraform_outputs.outputs.IOT_SIMULATOR_DEVICE_NAME }}" | base64 -w 0 > device_simulator_name_b64.txt
-
-          kubectl apply -f - <<EOF
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: iot-credentials
-          type: Opaque
-          data:
-            device-connection-string: $(cat conn_str_b64.txt)
-            iot-simulator-device-name: $(cat device_simulator_name_b64.txt)
-          EOF
-        env:
-          KUBECONFIG: ${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}
-
-      - name: Verify Kubernetes Deployment (Optional)
-        run: |
-          kubectl get pods -l app=iot-simulator
-          kubectl get deployments iot-simulator
+      # ... (rest of your workflow) ...
