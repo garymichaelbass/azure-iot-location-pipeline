@@ -3,13 +3,13 @@
 name: GitHub Actions Full IoT Solution Deployment
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'terraform/**'
-      - 'iot-simulator/**'
-      - 'kubernetes/**'
-      - '.github/workflows/**'
+  workflow_dispatch:  # Manual trigger from GitHub UI
+
+# Change to this after debugging...
+# on:
+#   push:
+#     branches: [ main ]
+
 
 jobs:
   deploy-solution:
