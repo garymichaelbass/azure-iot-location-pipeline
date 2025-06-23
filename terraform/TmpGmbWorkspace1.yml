@@ -1,58 +1,48 @@
+      # --- NEW/REFINED STANZA ---
+      - name: Conditionally import Azure Resource Group
+        # Run always to ensure the check happens before apply
+        if: always()
+        run: |
+          # Dynamically get the resource group name from Terraform's variables
+          # Assumes resource_group_name is defined in variables.tf and set in terraform.tfvars.json
+          TF_VAR_RG_NAME=$(terraform show -json | jq -r '.configuration.root_module.variables.resource_group_name.value')
+          SUB_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
+          echo "Checking for Resource Group: $TF_VAR_RG_NAME"
+          echo "Subscription ID: $SUB_ID"
 
-terraform {
-  required_version = ">= 1.4.0"
+          # Check if RG exists in Azure
+          # 'az group show' returns 0 exit code if it exists, non-zero if not.
+          if az group show --name "$TF_VAR_RG_NAME" --output none &>/dev/null; then
+            echo "Resource Group '$TF_VAR_RG_NAME' found in Azure."
+            # Check if RG is already in Terraform state
+            if terraform state list -id="azurerm_resource_group.iot_resource_group" &>/dev/null; then
+              echo "Resource Group '$TF_VAR_RG_NAME' is already in Terraform state. No import needed."
+            else
+              echo "Resource Group '$TF_VAR_RG_NAME' found in Azure but NOT in Terraform state. Importing..."
+              terraform import azurerm_resource_group.iot_resource_group "/subscriptions/$SUB_ID/resourceGroups/$TF_VAR_RG_NAME"
+              if [ $? -eq 0 ]; then
+                echo "Successfully imported Resource Group '$TF_VAR_RG_NAME'."
+              else
+                echo "ERROR: Failed to import Resource Group '$TF_VAR_RG_NAME'."
+                exit 1 # Fail the step if import fails
+              fi
+            fi
+          else
+            echo "Resource Group '$TF_VAR_RG_NAME' does not exist in Azure. Terraform apply will create it."
+          fi
+        working-directory: ./terraform
+        shell: bash
+        # No need for TF_VAR_ envs here as `terraform show -json` reads from tfvars.
+        # ARM_* envs are already set at the job level.
 
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "3.108.0"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.50.0"
-    }
-    databricks = {
-      source  = "databricks/databricks"
-      version = "~> 1.83.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.6.0"
-    }
-  }
-}
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -auto-approve
+        working-directory: ./terraform
+        # No need to repeat env vars here either if they are at the job level.
+        # But if you like being explicit per step, it's fine.
+        # Make sure to add continue-on-error: true here if you want the unlock step to run on failure.
+        # continue-on-error: true # <--- UNCOMMENT THIS IF YOU HAVE A FORCE UNLOCK STEP AFTER
 
-provider "azurerm" {
-  features {}
-
-  client_id       = var.github_client_id
-  client_secret   = var.github_client_secret
-  tenant_id       = var.github_tenant_id
-  subscription_id = var.github_subscription_id
-}
-
-provider "azuread" {
-  # Inherits from environment variables (GitHub Actions, az CLI, etc.)
-}
-
-provider "databricks" {
-  alias = "workspace"
-
-  # Use a conditional to avoid crashing when workspace values aren't available yet
-  host = (
-    can(azurerm_databricks_workspace.iot_databricks_workspace.workspace_url)
-    ? azurerm_databricks_workspace.iot_databricks_workspace.workspace_url
-    : null
-  )
-
-  azure_workspace_resource_id = (
-    can(azurerm_databricks_workspace.iot_databricks_workspace.id)
-    ? azurerm_databricks_workspace.iot_databricks_workspace.id
-    : null
-  )
-}
-
-provider "random" {
-  # No config needed
-}
+      # ... (rest of your workflow)

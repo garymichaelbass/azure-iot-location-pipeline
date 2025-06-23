@@ -55,20 +55,9 @@ provider "azuread" {
 }
 
 provider "databricks" {
-  alias = "workspace"
-
-  # Use a conditional to avoid crashing when workspace values aren't available yet
-  host = (
-    can(azurerm_databricks_workspace.iot_databricks_workspace.workspace_url)
-    ? azurerm_databricks_workspace.iot_databricks_workspace.workspace_url
-    : null
-  )
-
-  azure_workspace_resource_id = (
-    can(azurerm_databricks_workspace.iot_databricks_workspace.id)
-    ? azurerm_databricks_workspace.iot_databricks_workspace.id
-    : null
-  )
+  alias                       = "workspace"
+  host                        = azurerm_databricks_workspace.iot_databricks_workspace.workspace_url
+  azure_workspace_resource_id = azurerm_databricks_workspace.iot_databricks_workspace.id
 }
 
 provider "random" {
