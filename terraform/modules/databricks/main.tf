@@ -16,7 +16,7 @@ resource "databricks_cluster" "iot_cluster" {
   spark_version           = data.databricks_spark_version.latest_lts.id
   node_type_id            = data.databricks_node_type.smallest.id
   autotermination_minutes = 30
-  num_workers             = 2
+  num_workers             = 1
 }
 
 # Upload a Python notebook (notebook.py) to read from Event Hub and write to Cosmos DB.
