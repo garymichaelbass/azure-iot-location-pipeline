@@ -20,7 +20,9 @@ terraform/plan_*
 
 terraform/terraform.tfvars.json
 
-terraform/TmpGmbWorkspace
+terraform/TmpGmbWorkspace1
+terraform/TmpGmbWorkspace2
+terraform/TmpGmbWorkspace3
 
 # Terraform internal working directory
 terraform/.terraform/
