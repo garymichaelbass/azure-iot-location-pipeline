@@ -1,0 +1,34 @@
+[
+  {
+    "cloudName": "AzureCloud",
+    "homeTenantId": "59262f27-7282-4ac3-913f-61484b2be93f",
+    "id": "3af2b274-d90d-4d43-a107-d2fee4c874e2",
+    "isDefault": true,
+    "managedByTenants": [],
+    "name": "GarysAzureSubscription",
+    "state": "Enabled",
+    "tenantDefaultDomain": "garygarymichaelbass.onmicrosoft.com",
+    "tenantDisplayName": "garys-tenantdirectory",
+    "tenantId": "59262f27-7282-4ac3-913f-61484b2be93f",
+    "user": {
+      "name": "gary@garymichaelbass.com",
+      "type": "user"
+    }
+  },
+  {
+    "cloudName": "AzureCloud",
+    "homeTenantId": "59262f27-7282-4ac3-913f-61484b2be93f",
+    "id": "d49a41d8-c48d-4a98-bff5-5a59d04b9ab3",
+    "isDefault": false,
+    "managedByTenants": [],
+    "name": "Azure subscription 1",
+    "state": "Enabled",
+    "tenantDefaultDomain": "garygarymichaelbass.onmicrosoft.com",
+    "tenantDisplayName": "garys-tenantdirectory",
+    "tenantId": "59262f27-7282-4ac3-913f-61484b2be93f",
+    "user": {
+      "name": "gary@garymichaelbass.com",
+      "type": "user"
+    }
+  }
+]
