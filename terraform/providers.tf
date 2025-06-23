@@ -55,8 +55,17 @@ provider "azuread" {
 }
 
 provider "databricks" {
-  host = try(azurerm_databricks_workspace.iot_databricks_workspace.workspace_url, null)
-  azure_workspace_resource_id = try(azurerm_databricks_workspace.iot_databricks_workspace.id, null)
+  alias = "workspace"
+
+  host = try(
+    azurerm_databricks_workspace.iot_databricks_workspace.workspace_url,
+    null
+  )
+
+  azure_workspace_resource_id = try(
+    azurerm_databricks_workspace.iot_databricks_workspace.id,
+    null
+  )
 }
 
 provider "random" {
