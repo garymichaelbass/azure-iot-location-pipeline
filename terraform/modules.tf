@@ -20,7 +20,7 @@ module "databricks_iot" {
   eventhub_connection_string = azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string
 
   providers = {
-    databricks = databricks
+    databricks = databricks.workspace
   }
 
   depends_on = [azurerm_databricks_workspace.iot_databricks_workspace]

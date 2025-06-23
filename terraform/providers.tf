@@ -55,6 +55,7 @@ provider "azuread" {
 }
 
 provider "databricks" {
+  alias                       = "workspace"
   host                        = azurerm_databricks_workspace.iot_databricks_workspace.workspace_url
   azure_workspace_resource_id = azurerm_databricks_workspace.iot_databricks_workspace.id
 }
