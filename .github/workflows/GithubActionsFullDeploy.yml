@@ -228,10 +228,11 @@ jobs:
         run: |
           echo "Contents of ~/.kube/config:"
           cat "$HOME/.kube/config"
-          echo "kubectl get nodes output:"
-          kubectl get nodes # This should now work
           echo "terraform output -raw aks_kube_config | base64 | tr -d \ n:"
           terraform output -raw aks_kube_config | base64 | tr -d '\n'
+          echo "kubectl get nodes output:"
+          kubectl get nodes # This should now work
+
         # No KUBECONFIG env needed here, as it's set globally via GITHUB_ENV
 
       - name: Debug - Check Kubeconfig (OPTIONAL)
