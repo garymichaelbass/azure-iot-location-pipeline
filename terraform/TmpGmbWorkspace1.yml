@@ -1,140 +1,17 @@
-name: Your Workflow Name (e.g., FullDeploy)
-
-on:
-  # ... your existing workflow_dispatch or other triggers ...
-
-jobs:
-  deploy: # Assuming this is the job that runs your terraform apply and subsequent steps
-    runs-on: ubuntu-latest
-
-    # ... your existing env variables ...
-    env:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-    steps:
-      # ... (previous steps like Checkout, Azure Login, Set up Terraform, Terraform Init, Terraform Apply) ...
-
-      # --- 2. Extract Outputs from Terraform ---
-      - name: Get Terraform Outputs
-        id: terraform_outputs # This step's ID is used to reference its outputs
-        run: |
-          cd terraform # Ensure you are in the terraform directory to get outputs from state
-          TERRAFORM_OUTPUTS=$(terraform output -json)
-
-          # Debugging: Print outputs to ensure jq is working as expected
-          echo "Terraform Outputs JSON:"
-          echo "$TERRAFORM_OUTPUTS" | jq .
-
-          # Write key outputs to GITHUB_OUTPUT for use in subsequent steps
-          echo "IOT_SIMULATOR_DEVICE_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_simulator_device_name.value')" >> "$GITHUB_OUTPUT"
-          echo "AKS_KUBECFG=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.aks_kube_config.value' | base64 -w 0)" >> "$GITHUB_OUTPUT"
-          echo "ACR_LOGIN_SERVER=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.acr_login_server.value')" >> "$GITHUB_OUTPUT"
-          echo "IOT_HUB_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_hub_name.value')" >> "$GITHUB_OUTPUT"
-          echo "RESOURCE_GROUP_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.resource_group_name.value')" >> "$GITHUB_OUTPUT"
-        working-directory: ./terraform # Ensure this is always pointing to your terraform folder
-
-      - name: Get IoT device connection string via Azure CLI
-        id: get_conn_str # ID for this step to retrieve its output later
-        run: |
-          # Retrieve values from the 'terraform_outputs' step
-          IOT_HUB_NAME="${{ steps.terraform_outputs.outputs.IOT_HUB_NAME }}"
-          RESOURCE_GROUP_NAME="${{ steps.terraform_outputs.outputs.RESOURCE_GROUP_NAME }}"
-          IOT_SIMULATOR_DEVICE_NAME="${{ steps.terraform_outputs.outputs.IOT_SIMULATOR_DEVICE_NAME }}"
-
-          echo "Getting connection string for device: $IOT_SIMULATOR_DEVICE_NAME in hub: $IOT_HUB_NAME"
-
-          conn_str=$(az iot hub device-identity connection-string show \
-            --device-id "$IOT_SIMULATOR_DEVICE_NAME" \
-            --hub-name "$IOT_HUB_NAME" \
-            --resource-group "$RESOURCE_GROUP_NAME" \
-            --query connectionString -o tsv)
-
-          if [ -z "$conn_str" ]; then
-            echo "ERROR: Failed to retrieve IoT Hub device connection string."
-            exit 1
-          fi
-
-          echo "IOTHUB_DEVICE_CONNECTION_STRING=$conn_str" >> "$GITHUB_OUTPUT"
-
-      # --- NEW/Consolidated Step: Setup Kubeconfig and Debug kubectl ---
-      - name: Configure Kubectl and Verify AKS Connectivity
-        run: |
-          # Create the .kube directory if it doesn't exist
-          mkdir -p "$HOME/.kube"
-          
-          # Decode the base64 KubeConfig received from Terraform outputs
-          # and write it to the default kubeconfig file path.
-          echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > "$HOME/.kube/config"
-          
-          # Set secure permissions for the kubeconfig file.
-          chmod 600 "$HOME/.kube/config"
-          
-          # Export KUBECONFIG environment variable for all subsequent steps in this job.
-          # This ensures kubectl knows where to find the config.
-          echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
-
-          echo "--- Debug: Contents of ~/.kube/config ---"
-          cat "$HOME/.kube/config" # Verify the decoded content is correct YAML
-          echo "--- End Debug ---"
-
-          echo "--- Debug: kubectl get nodes output ---"
-          kubectl get nodes # This command should now correctly use the configured kubeconfig
-          echo "--- End Debug ---"
 
 
-      # --- 3. Docker Image Build and Push ---
-      - name: Log in to Azure Container Registry
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }} # Use ACR_LOGIN_SERVER (uppercase)
-          username: ${{ secrets.AZURE_CLIENT_ID }}
-          password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      - name: Build and Tag Docker image
-        run: docker build -t ${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}/iot-simulator:latest ./iot-simulator/ # Use ACR_LOGIN_SERVER (uppercase)
 
-      - name: Push image to Azure Container Registry
-        run: docker push ${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}/iot-simulator:latest # Use ACR_LOGIN_SERVER (uppercase)
 
-      # --- 4. Inject ACR login server into simulator-deployment.yaml ---
-      - name: Inject ACR login server into Kubernetes manifest
-        run: |
-          # Retrieve ACR login server from step outputs
-          ACR="${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}" # Use ACR_LOGIN_SERVER (uppercase)
-          sed -i "s|<your-registry>|$ACR|g" ./kubernetes/simulator-deployment.yaml
+- name: Set up Kubeconfig for AKS
+  run: |
+    echo "📁 Creating ~/.kube directory"
+    mkdir -p ~/.kube
 
-      # --- 5. Kubernetes Deployment ---
-      - name: Create Kubernetes Secret for IoT Simulator
-        run: |
-          # KUBECONFIG is set globally via GITHUB_ENV by 'Configure Kubectl' step.
-          # The connection string and device name are base64-encoded for the secret.
-          echo -n "${{ steps.get_conn_str.outputs.IOTHUB_DEVICE_CONNECTION_STRING }}" | base64 -w 0 > conn_str_b64.txt
-          echo -n "${{ steps.terraform_outputs.outputs.IOT_SIMULATOR_DEVICE_NAME }}" | base64 -w 0 > device_simulator_name_b64.txt
+    echo "🔐 Decoding kubeconfig and writing to ~/.kube/config"
+    echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > ~/.kube/config
 
-          kubectl apply -f - <<EOF
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: iot-credentials
-          type: Opaque
-          data:
-            device-connection-string: $(cat conn_str_b64.txt)
-            iot-simulator-device-name: $(cat device_simulator_name_b64.txt)
-          EOF
-        # No 'env: KUBECONFIG' needed here.
+    echo "🔒 Securing config file permissions"
+    chmod 600 ~/.kube/config
 
-      - name: Deploy Kubernetes Manifests
-        run: |
-          # KUBECONFIG is set globally via GITHUB_ENV.
-          kubectl apply -f ./kubernetes/simulator-deployment.yaml
-          kubectl apply -f ./kubernetes/simulator-service.yaml # Assuming you have a service manifest
-
-      - name: Verify Kubernetes Deployment
-        run: |
-          # KUBECONFIG is set globally via GITHUB_ENV.
-          kubectl get pods -l app=iot-simulator
-          kubectl get deployments iot-simulator
-          kubectl get services iot-simulator # Assuming you have a service
+    echo "✅ kubeconfig is in place"
