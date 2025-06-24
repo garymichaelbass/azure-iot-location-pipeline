@@ -180,12 +180,14 @@ jobs:
         run: |
           TERRAFORM_OUTPUTS=$(terraform output -json)
           echo "IOT_SIMULATOR_DEVICE_NAME=$(echo $TERRAFORM_OUTPUTS | jq -r '.iot_simulator_device_name.value')" >> $GITHUB_OUTPUT
+          
           AKS_KUBECFG_RAW=$(echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value')
-          echo "AKS_KUBECFG=$(echo "$AKS_KUBECFG_RAW" | base64 | tr -d '\n')" >> $GITHUB_OUTPUT
+          echo "AKS_KUBECFG=$(echo "$AKS_KUBECFG_RAW" | tr -d '\n')" >> $GITHUB_OUTPUT
           echo "Outputting AKS_KUBECFG_RAW"
           echo $AKS_KUBECFG_RAW
           echo "Outputting AKS_KUBECFG"
           echo $AKS_KUBECFG
+          
           echo "ACR_LOGIN_SERVER=$(echo $TERRAFORM_OUTPUTS | jq -r '.acr_login_server.value')" >> $GITHUB_OUTPUT
           echo "IOT_HUB_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_hub_name.value')" >> "$GITHUB_OUTPUT"
           echo "RESOURCE_GROUP_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.resource_group_name.value')" >> "$GITHUB_OUTPUT"
