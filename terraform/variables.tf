@@ -45,7 +45,7 @@ variable "iot_device_name" {
 variable "cosmos_db_name" {
   description = "Cosmos DB account name"
   type        = string
-  default     = "iotcosmosdb"
+  default     = "iotcosmosdbone"
 }
 
 variable "prefix" {
