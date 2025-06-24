@@ -36,30 +36,18 @@ jobs:
 
       - name: Attempt Terraform Destroy with Lock Handling
         id: terraform_destroy_attempt
-        # This step attempts the terraform destroy command.
-        # If it fails due to a state lock, it extracts the lock ID,
-        # performs a force-unlock, and then retries the destroy operation.
+        # Attempt terraform destroy command.  If the command fails due to a state lock, 
+        # extract the lock ID, perform force-unlock, then return the terraform destroy command.
         run: |
-          # Navigate to the terraform directory
           cd terraform
 
           # Define the terraform destroy command as a shell array on a single line.
-          # This approach is generally more robust for passing arguments, as each
-          # element in the array is treated as a distinct argument.
-          # Ensure that the secrets are correctly populated and align with
-          # the variables expected by your Terraform configuration.
+          # Populate the variables per the GitHub secrets.
           DESTROY_COMMAND=(terraform destroy -auto-approve \
             -var="github_client_id=${{ secrets.AZURE_CLIENT_ID }}" \
             -var="github_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
             -var="github_tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
             -var="github_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}")
-
-          # --- Debugging Start ---
-          echo "--- Debug: Contents of DESTROY_COMMAND array ---"
-          # Print each element of the array on a new line to verify correct parsing.
-          printf '%s\n' "${DESTROY_COMMAND[@]}"
-          echo "--- End Debug ---"
-          # --- Debugging End ---
 
           echo "Attempting initial terraform destroy..."
 
@@ -89,7 +77,7 @@ jobs:
               if [ -n "$LOCK_ID" ]; then
                 echo "Found lock ID: $LOCK_ID. Attempting to force unlock..."
                 # Execute terraform force-unlock with the extracted ID and the --force flag.
-                # The --force flag is designed for non-interactive environments to prevent prompting.
+                # The -force flag is used for non-interactive environments to prevent prompting.
                 # If force-unlock fails, this entire step will fail.
                 terraform force-unlock -force "$LOCK_ID"
 
