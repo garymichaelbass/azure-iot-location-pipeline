@@ -228,14 +228,8 @@ jobs:
           echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > ~/.kube/config
           # Secure file permissions
           chmod 600 ~/.kube/config
-          # # echo "${{ steps.terraform_outputs.outputs.aks_kubecfg }}" > kubeconfig.yaml
-          # echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > ~/.kube/config
-          # echo "Printing out $ {{ steps.terraform_outputs.outputs.AKS_KUBECFG }} | base64 -d "
-          # echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d 
-          # echo "Executing chmod 600 kubeconfig.yaml"
-          # chmod 600 ~/.kube/config.yaml
-
-          # mv kubeconfig.yaml ~/.kube/config
+          echo "Outputting ~/.kube/config"
+          cat ~/.kube/config
 
       - name: Debug - Check Kubeconfig (OPTIONAL2)
         run: |
