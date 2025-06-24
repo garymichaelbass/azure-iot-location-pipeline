@@ -220,10 +220,14 @@ jobs:
       # --- 5. Kubernetes Deployment ---
       - name: Set up Kubeconfig for AKS
         run: |
+          mkdir -p ~/.kube
           # echo "${{ steps.terraform_outputs.outputs.aks_kubecfg }}" > kubeconfig.yaml
           echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > ~/.kube/config
+          echo "Printing out $ {{ steps.terraform_outputs.outputs.AKS_KUBECFG }} | base64 -d "
+          echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d 
+          echo "Executing chmod 600 kubeconfig.yaml"
           chmod 600 kubeconfig.yaml
-          mkdir -p ~/.kube
+
           mv kubeconfig.yaml ~/.kube/config
 
       - name: Debug - Check Kubeconfig (OPTIONAL2)
