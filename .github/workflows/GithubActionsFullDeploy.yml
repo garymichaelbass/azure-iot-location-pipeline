@@ -177,24 +177,33 @@ jobs:
       # --- 2. Extract Outputs from Terraform ---
       - name: Get Terraform Outputs (all except for IOTHUB_DEVICE_CONNECTION_STRING)
         id: terraform_outputs
-        run: |
+        run: |    
+
+          
           TERRAFORM_OUTPUTS=$(terraform output -json)
           echo "IOT_SIMULATOR_DEVICE_NAME=$(echo $TERRAFORM_OUTPUTS | jq -r '.iot_simulator_device_name.value')" >> $GITHUB_OUTPUT
           
-          ## GMB AKS_KUBECFG_RAW=$(echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value')
-          ## GMB echo "AKS_KUBECFG=$(echo "$AKS_KUBECFG_RAW" | tr -d '\n')" >> $GITHUB_OUTPUT
+          AKS_KUBECFG_RAW=$(echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value')
+          echo "AKS_KUBECFG=$(echo "$AKS_KUBECFG_RAW" | tr -d '\n')" >> $GITHUB_OUTPUT
 
-          echo "AKS_KUBECFG=$(echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value' | tr -d '\r')" >> $GITHUB_OUTPUT
-          
+          # echo "AKS_KUBECFG=$(echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value' | tr -d '\r')" >> $GITHUB_OUTPUT
           echo "Outputting AKS_KUBECFG_RAW"
           echo $AKS_KUBECFG_RAW
-          echo "Outputting AKS_KUBECFG"
-          echo $AKS_KUBECFG
-          
+          # echo "Outputting AKS_KUBECFG"
+          # echo $AKS_KUBECFG
+
+          echo "Outputting steps.terraform_outputs.outputs.aks_kube_config"
+          echo "${{ steps.terraform_outputs.outputs.aks_kube_config }}"
+          echo "Outputting steps.terraform_outputs.outputs.AKS_KUBECFG"
+          echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}"
+
           echo "ACR_LOGIN_SERVER=$(echo $TERRAFORM_OUTPUTS | jq -r '.acr_login_server.value')" >> $GITHUB_OUTPUT
           echo "IOT_HUB_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_hub_name.value')" >> "$GITHUB_OUTPUT"
           echo "RESOURCE_GROUP_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.resource_group_name.value')" >> "$GITHUB_OUTPUT"
+
+
         working-directory: ./terraform
+
 
       - name: Get IoT device connection string via Azure CLI
         id: get_conn_str
