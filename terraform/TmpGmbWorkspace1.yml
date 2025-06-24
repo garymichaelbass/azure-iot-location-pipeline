@@ -1,17 +1,65 @@
 
+      # --- 2. Extract Outputs from Terraform ---
+      - name: Get Terraform Outputs (all except for IOTHUB_DEVICE_CONNECTION_STRING)
+        id: terraform_outputs
+        run: |
+          AKS_KUBECFG_RAW=$(echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value')
+          echo "AKS_KUBECFG=$(echo "$AKS_KUBECFG_RAW" | base64 | tr -d '\n')" >> $GITHUB_OUTPUT
 
+      # --- 5. Kubernetes Deployment ---
+      - name: Set up Kubeconfig for AKS
+        run: |
+          echo "Create ~/.kube directory"
+          mkdir -p ~/.kube
 
+          # Decode kubeconfig and write to ~/.kube/config
+          echo "Decode kubeconfig and write to ~/.kube/config"
+          echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > ~/.kube/config
+          # Secure file permissions
+          chmod 600 ~/.kube/config
+          echo "Outputting ~/.kube/config"
+          cat ~/.kube/config
 
+      - name: Debug - Check Kubeconfig (OPTIONAL2)
+        run: |
+          echo "Contents of ~/.kube/config:"
+          cat "$HOME/.kube/config"
+          echo "terraform output -raw aks_kube_config | base64 | tr -d \ n:"
+          terraform output -raw aks_kube_config | base64 | tr -d '\n'
+          echo "terraform output -raw aks_kube_config  | tr -d \ n:"
+          terraform output -raw aks_kube_config | tr -d '\n'
+          echo "cat /home/runner/.kube/config"
+          cat /home/runner/.kube/config
+          echo "kubectl get nodes output:"
+          kubectl get nodes # This should now work
 
-- name: Set up Kubeconfig for AKS
-  run: |
-    echo "📁 Creating ~/.kube directory"
-    mkdir -p ~/.kube
+        # No KUBECONFIG env needed here, as it's set globally via GITHUB_ENV
 
-    echo "🔐 Decoding kubeconfig and writing to ~/.kube/config"
-    echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > ~/.kube/config
+      - name: Debug - Check Kubeconfig (OPTIONAL)
+        run: |
+          ls -l ~/.kube/
+          cat ~/.kube/config
+          kubectl get nodes
 
-    echo "🔒 Securing config file permissions"
-    chmod 600 ~/.kube/config
+      - name: Create Kubernetes Secret for IoT Simulator
+        run: |
+          echo -n "${{ steps.terraform_outputs.outputs.iothub_device_connection_string }}" | base64 -w 0 > conn_str_b64.txt
+          echo -n "${{ steps.terraform_outputs.outputs.iot_simulator_device_name }}" | base64 -w 0 > device_simulator_name_b64.txt
 
-    echo "✅ kubeconfig is in place"
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: iot-credentials
+          type: Opaque
+          data:
+            device-connection-string: $(cat conn_str_b64.txt)
+            iot-simulator-device-name: $(cat device_simulator_name_b64.txt)
+          EOF
+        env:
+          KUBECONFIG: ${{ steps.terraform_outputs.outputs.aks_kubecfg }}
+
+      - name: Verify Kubernetes Deployment (Optional)
+        run: |
+          kubectl get pods -l app=iot-simulator
+          kubectl get deployments iot-simulator
