@@ -57,13 +57,18 @@ variable "prefix" {
 variable "aks_node_count" {
   description = "Number of nodes in the default AKS node pool"
   type        = number
-  default     = 3
+  default     = 1
 }
 
 variable "aks_node_vm_size" {
   description = "The size of the Virtual Machine for AKS nodes (e.g., Standard_DS2_v2, Standard_B2s)."
   type        = string
-  default     = "Standard_DS2_v2"
+  default     = "Standard_DS1_v2"
+  # Standard_B2s: 2 vCPUs, 4 GB RAM. Often the cheapest option for burstable workloads.
+  # Standard_B2ms: 2 vCPUs, 8 GB RAM (more memory than B2s).
+  # Standard_B1ls: 1 vCPU, 0.5 GB RAM. Very small, often too small for general AKS workloads unless your pods are extremely lightweight.
+  #	Standard_B1ms: 1 vCPU, 2 GB RAM.
+  # Standard_DS1_v2: 1 vCPU, 3.5 GB RAM. (Less popular than D2v2/D4v2 but exists).
 }
 
 variable "acr_name" {
