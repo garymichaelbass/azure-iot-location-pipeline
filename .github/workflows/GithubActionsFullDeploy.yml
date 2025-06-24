@@ -182,7 +182,7 @@ jobs:
           TERRAFORM_OUTPUTS=$(terraform output -json)
           echo "IOT_SIMULATOR_DEVICE_NAME=$(echo $TERRAFORM_OUTPUTS | jq -r '.iot_simulator_device_name.value')" >> $GITHUB_OUTPUT
 
-          echo "outputting AKS_KUBECFG_RAW=$ (echo $TERRAFORM_OUTPUTS | jq -r ' .aks_kube_config.value ' ) "
+          echo "outputting AKS_KUBECFG_RAW=$ (echo $ TERRAFORM_OUTPUTS | jq -r ' .aks_kube_config.value ' ) "
           echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value'
 
           AKS_KUBECFG_RAW=$(echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value')
