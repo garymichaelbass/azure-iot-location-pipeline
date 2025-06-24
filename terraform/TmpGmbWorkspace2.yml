@@ -1,3 +1,36 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:  # Manual trigger from GitHub UI
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.x
+
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init
 
       - name: Attempt Terraform Destroy with Lock Handling
         id: terraform_destroy_attempt
@@ -8,20 +41,33 @@
           # Navigate to the terraform directory
           cd terraform
 
-          # Define the terraform destroy command with all necessary variables.
-          DESTROY_COMMAND="terraform destroy -auto-approve \
-            -var=\"github_client_id=${{ secrets.AZURE_CLIENT_ID }}\" \
-            -var=\"github_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}\" \
-            -var=\"github_tenant_id=${{ secrets.AZURE_TENANT_ID }}\" \
-            -var=\"github_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}\""
+          # Define the terraform destroy command as a shell array on a single line.
+          # This approach is generally more robust for passing arguments, as each
+          # element in the array is treated as a distinct argument.
+          # Ensure that the secrets are correctly populated and align with
+          # the variables expected by your Terraform configuration.
+          DESTROY_COMMAND=(terraform destroy -auto-approve \
+            -var="github_client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -var="github_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+            -var="github_tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
+            -var="github_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}")
+
+          # --- Debugging Start ---
+          echo "--- Debug: Contents of DESTROY_COMMAND array ---"
+          # Print each element of the array on a new line to verify correct parsing.
+          printf '%s\n' "${DESTROY_COMMAND[@]}"
+          echo "--- End Debug ---"
+          # --- Debugging End ---
 
           echo "Attempting initial terraform destroy..."
 
-          # Execute the destroy command, capture both stdout and stderr, and get the exit code.
-          # 'set +e' temporarily disables exiting on error for this subshell
-          # Allows explicit checking of the exit code and processing of the output.
+          # Execute the destroy command using the array.
+          # Capture both stdout and stderr, and get the exit code.
+          # 'set +e' temporarily disables exiting on error for this subshell,
+          # allowing explicit checking of the exit code and processing of the output.
           set +e
-          OUTPUT=$($DESTROY_COMMAND 2>&1)
+          # "${DESTROY_COMMAND[@]}" expands the array elements as separate, properly quoted arguments.
+          OUTPUT=$("${DESTROY_COMMAND[@]}" 2>&1)
           DESTROY_EXIT_CODE=$?
           set -e # Re-enable exiting on error, so any subsequent command failures will fail the step.
 
@@ -45,9 +91,9 @@
                 terraform force-unlock "$LOCK_ID"
 
                 echo "Retrying terraform destroy after force unlock..."
-                # Retry the terraform destroy command.
+                # Retry the terraform destroy command using the array.
                 # If this retry also fails, the entire GitHub Actions step will fail.
-                $DESTROY_COMMAND
+                "${DESTROY_COMMAND[@]}"
               else
                 echo "ERROR: Could not extract lock ID from the destroy command output."
                 echo "Manual intervention may be required to resolve the state lock."
