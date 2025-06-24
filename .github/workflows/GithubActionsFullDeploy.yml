@@ -231,7 +231,8 @@ jobs:
 
           # Decode kubeconfig and write to ~/.kube/config
           echo "Decode kubeconfig and write to ~/.kube/config"
-          echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > ~/.kube/config
+          # echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > ~/.kube/config
+          echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" > ~/.kube/config
           # Secure file permissions
           chmod 600 ~/.kube/config
           echo "Outputting ~/.kube/config"
