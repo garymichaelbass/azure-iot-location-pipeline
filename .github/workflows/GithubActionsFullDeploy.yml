@@ -220,7 +220,7 @@ jobs:
       # --- 5. Kubernetes Deployment ---
       - name: Set up Kubeconfig for AKS
         run: |
-          echo "Create ~/.kube directory
+          echo "Create ~/.kube directory"
           mkdir -p ~/.kube
 
           # Decode kubeconfig and write to ~/.kube/config
