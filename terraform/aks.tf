@@ -26,6 +26,7 @@ resource "azurerm_kubernetes_cluster" "iot_aks_cluster" {
     name       = "default"
     node_count = var.aks_node_count
     vm_size    = var.aks_node_vm_size
+    temporary_name_for_rotation = "tmpnodepool1"
   }
 
   identity {
