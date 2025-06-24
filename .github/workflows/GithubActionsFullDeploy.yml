@@ -182,15 +182,17 @@ jobs:
           echo "IOT_SIMULATOR_DEVICE_NAME=$(echo $TERRAFORM_OUTPUTS | jq -r '.iot_simulator_device_name.value')" >> $GITHUB_OUTPUT
           echo "AKS_KUBECFG=$(echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value' | base64 -w 0)" >> $GITHUB_OUTPUT
           echo "ACR_LOGIN_SERVER=$(echo $TERRAFORM_OUTPUTS | jq -r '.acr_login_server.value')" >> $GITHUB_OUTPUT
+          echo "IOT_HUB_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_hub_name.value')" >> "$GITHUB_OUTPUT"
+          echo "RESOURCE_GROUP_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.resource_group_name.value')" >> "$GITHUB_OUTPUT"
         working-directory: ./terraform
 
       - name: Get IoT device connection string via Azure CLI
         id: get_conn_str
         run: |
           conn_str=$(az iot hub device-identity connection-string show \
-            --device-id ${{ steps.terraform_outputs.outputs.IOT_SIMULATOR_DEVICE_NAME }} \
-            --hub-name ${{ steps.terraform_outputs.outputs.IOTHUB_NAME }} \
-            --resource-group ${{ steps.terraform_outputs.outputs.RESOURCE_GROUP_NAME }} \
+            --device-id ${{ steps.terraform_outputs.outputs.iot_simulator_device_name }} \
+            --hub-name ${{ steps.terraform_outputs.outputs.iot_hub_name }} \
+            --resource-group ${{ steps.terraform_outputs.outputs.resource_group_name }} \
             --query connectionString -o tsv)
           echo "IOTHUB_DEVICE_CONNECTION_STRING=$conn_str" >> $GITHUB_OUTPUT
 
@@ -198,26 +200,26 @@ jobs:
       - name: Log in to Azure Container Registry
         uses: azure/docker-login@v1
         with:
-          login-server: ${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}
+          login-server: ${{ steps.terraform_outputs.outputs.acr_login_server }}
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Build and Tag Docker image
-        run: docker build -t ${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}/iot-simulator:latest ./iot-simulator/
+        run: docker build -t ${{ steps.terraform_outputs.outputs.acr_login_server }}/iot-simulator:latest ./iot-simulator/
 
       - name: Push image to Azure Container Registry
-        run: docker push ${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}/iot-simulator:latest
+        run: docker push ${{ steps.terraform_outputs.outputs.acr_login_server }}/iot-simulator:latest
 
       # --- 4. Inject ACR login server into simulator-deployment.yaml ---
       - name: Inject ACR login server into Kubernetes manifest
         run: |
-          ACR=${{ steps.terraform_outputs.outputs.ACR_LOGIN_SERVER }}
+          ACR=${{ steps.terraform_outputs.outputs.acr_login_server }}
           sed -i "s|<your-registry>|$ACR|g" ./kubernetes/simulator-deployment.yaml
 
       # --- 5. Kubernetes Deployment ---
       - name: Set up Kubeconfig for AKS
         run: |
-          echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > kubeconfig.yaml
+          echo "${{ steps.terraform_outputs.outputs.aks_kubecfg }}" | base64 -d > kubeconfig.yaml
           chmod 600 kubeconfig.yaml
           mkdir -p ~/.kube
           mv kubeconfig.yaml ~/.kube/config
@@ -230,8 +232,8 @@ jobs:
 
       - name: Create Kubernetes Secret for IoT Simulator
         run: |
-          echo -n "${{ steps.terraform_outputs.outputs.IOTHUB_DEVICE_CONNECTION_STRING }}" | base64 -w 0 > conn_str_b64.txt
-          echo -n "${{ steps.terraform_outputs.outputs.IOT_SIMULATOR_DEVICE_NAME }}" | base64 -w 0 > device_simulator_name_b64.txt
+          echo -n "${{ steps.terraform_outputs.outputs.iothub_device_connection_string }}" | base64 -w 0 > conn_str_b64.txt
+          echo -n "${{ steps.terraform_outputs.outputs.iot_simulator_device_name }}" | base64 -w 0 > device_simulator_name_b64.txt
 
           kubectl apply -f - <<EOF
           apiVersion: v1
@@ -244,7 +246,7 @@ jobs:
             iot-simulator-device-name: $(cat device_simulator_name_b64.txt)
           EOF
         env:
-          KUBECONFIG: ${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}
+          KUBECONFIG: ${{ steps.terraform_outputs.outputs.aks_kubecfg }}
 
       - name: Verify Kubernetes Deployment (Optional)
         run: |

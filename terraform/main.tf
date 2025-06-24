@@ -136,11 +136,16 @@ resource "azurerm_container_registry" "iot_acr" {
   admin_enabled       = false
 }
 
+# azuread_service_principal: 
+# It is used to create and manage a Service Principal within Azure Active Directory (Azure AD). 
+# It is a security identity that allows applications or services to access Azure resources. 
+# It functions as a "service account" with specific permissions
+# It enables secure and controlled access to resources without using a user's credentials.
 data "azuread_service_principal" "github_sp" {
   display_name = "github-iot-acr-pusher"
 }
 
- # Enable GitHub Actions to login into Registry utilizing ArcPush role
+# Enable GitHub Actions to login into Registry utilizing ArcPush role
 resource "azurerm_role_assignment" "github_acr_push" {
   scope                = azurerm_container_registry.iot_acr.id
   role_definition_name = "AcrPush"
