@@ -1,30 +1,106 @@
-  - name: Terraform Destroy with Lock Recovery
-    id: terraform_destroy_attempt
-    run: |
-      cd terraform
-      # This step attempts the terraform destroy command.
-      # If it fails due to a state lock, it extracts the lock ID,
-      # performs a force-unlock, and then retries the destroy operation.
+name: Your Workflow Name (e.g., FullDeploy)
 
-      destroy() {
-        terraform destroy -auto-approve \
-          -var="github_client_id=${{ secrets.AZURE_CLIENT_ID }}" \
-          -var="github_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
-          -var="github_tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
-          -var="github_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-      }
+on:
+  # ... your existing workflow_dispatch or other triggers ...
 
-      echo "Running terraform destroy..."
-      if ! destroy 2> destroy.log; then
-        if grep -q "Error acquiring the state lock" destroy.log; then
-          LOCK_ID=$(grep -A5 "Error acquiring the state lock" destroy.log | grep "ID:" | awk '{print $2}')
-          echo "State lock detected. Forcing unlock with ID: $LOCK_ID"
-          terraform force-unlock -force "$LOCK_ID"
-          echo "Retrying terraform destroy..."
-          destroy
-        else
-          echo "Terraform destroy failed for another reason:"
-          cat destroy.log
-          exit 1
-        fi
-      fi
+jobs:
+  deploy: # Assuming this is the job that runs your terraform apply and subsequent steps
+    runs-on: ubuntu-latest
+
+    # ... your existing env variables ...
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+    steps:
+      # ... (previous steps like Checkout, Azure Login, Set up Terraform, Terraform Init, Terraform Apply) ...
+
+      # --- 2. Extract Outputs from Terraform ---
+      - name: Get Terraform Outputs (all except for IOTHUB_DEVICE_CONNECTION_STRING)
+        id: terraform_outputs
+        run: |
+          cd terraform # Ensure you are in the terraform directory if your outputs are in state
+          TERRAFORM_OUTPUTS=$(terraform output -json)
+
+          # Debugging: Print outputs to ensure jq is working as expected
+          echo "Terraform Outputs JSON:"
+          echo "$TERRAFORM_OUTPUTS" | jq .
+
+          echo "IOT_SIMULATOR_DEVICE_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_simulator_device_name.value')" >> "$GITHUB_OUTPUT"
+          echo "AKS_KUBECFG=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.aks_kube_config.value' | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "ACR_LOGIN_SERVER=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.acr_login_server.value')" >> "$GITHUB_OUTPUT"
+          echo "IOT_HUB_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_hub_name.value')" >> "$GITHUB_OUTPUT"
+          echo "RESOURCE_GROUP_NAME=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.resource_group_name.value')" >> "$GITHUB_OUTPUT"
+        working-directory: ./terraform # Make sure this is still correct if you moved it.
+
+      # --- NEW STEP: Configure kubectl with decoded kubeconfig ---
+      - name: Configure Kubectl
+        run: |
+          # Create the .kube directory if it doesn't exist
+          mkdir -p "$HOME/.kube"
+          # Decode the base64 KubeConfig and write it to the default kubeconfig path
+          echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > "$HOME/.kube/config"
+          # Set permissions for the kubeconfig file
+          chmod 600 "$HOME/.kube/config"
+          echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV" # Export KUBECONFIG for subsequent steps
+
+      - name: Debug - Check Kubeconfig (OPTIONAL)
+        run: |
+          echo "Contents of ~/.kube/config:"
+          cat "$HOME/.kube/config"
+          echo "kubectl get nodes output:"
+          kubectl get nodes # This should now work
+        # No KUBECONFIG env needed here, as it's set globally via GITHUB_ENV
+
+      - name: Get IoT device connection string via Azure CLI
+        id: get_conn_str
+        run: |
+          # Retrieve the values from the previous step's outputs
+          IOT_HUB_NAME="${{ steps.terraform_outputs.outputs.IOT_HUB_NAME }}"
+          RESOURCE_GROUP_NAME="${{ steps.terraform_outputs.outputs.RESOURCE_GROUP_NAME }}"
+          IOT_SIMULATOR_DEVICE_NAME="${{ steps.terraform_outputs.outputs.IOT_SIMULATOR_DEVICE_NAME }}"
+
+          echo "Getting connection string for device: $IOT_SIMULATOR_DEVICE_NAME in hub: $IOT_HUB_NAME"
+
+          conn_str=$(az iot hub device-identity connection-string show \
+            --device-id "$IOT_SIMULATOR_DEVICE_NAME" \
+            --hub-name "$IOT_HUB_NAME" \
+            --resource-group "$RESOURCE_GROUP_NAME" \
+            --query connectionString -o tsv)
+
+          if [ -z "$conn_str" ]; then
+            echo "ERROR: Failed to retrieve IoT Hub device connection string."
+            exit 1
+          fi
+
+          echo "IOTHUB_DEVICE_CONNECTION_STRING=$conn_str" >> "$GITHUB_OUTPUT"
+        # No KUBECONFIG env needed here, as it's not directly interacting with K8s.
+
+      - name: Create Kubernetes Secret for IoT Simulator
+        run: |
+          # The KUBECONFIG env variable is already set globally by the 'Configure Kubectl' step.
+          # The base64 decoding of the connection string and device name for the secret is correct.
+          echo -n "${{ steps.get_conn_str.outputs.IOTHUB_DEVICE_CONNECTION_STRING }}" | base64 -w 0 > conn_str_b64.txt
+          echo -n "${{ steps.terraform_outputs.outputs.IOT_SIMULATOR_DEVICE_NAME }}" | base64 -w 0 > device_simulator_name_b64.txt
+
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: iot-credentials
+          type: Opaque
+          data:
+            device-connection-string: $(cat conn_str_b64.txt)
+            iot-simulator-device-name: $(cat device_simulator_name_b64.txt)
+          EOF
+        # No KUBECONFIG env needed here, as it's set globally via GITHUB_ENV.
+        # Ensure you reference IOTHUB_DEVICE_CONNECTION_STRING from the correct step id (get_conn_str)
+        # instead of terraform_outputs, as it's generated by az cli.
+
+      - name: Verify Kubernetes Deployment (Optional)
+        run: |
+          kubectl get pods -l app=iot-simulator
+          kubectl get deployments iot-simulator
+        # No KUBECONFIG env needed here, as it's set globally via GITHUB_ENV.

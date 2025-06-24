@@ -224,6 +224,16 @@ jobs:
           mkdir -p ~/.kube
           mv kubeconfig.yaml ~/.kube/config
 
+      - name: Debug - Check Kubeconfig (OPTIONAL2)
+        run: |
+          echo "Contents of ~/.kube/config:"
+          cat "$HOME/.kube/config"
+          echo "kubectl get nodes output:"
+          kubectl get nodes # This should now work
+          echo "terraform output -raw aks_kube_config | base64 | tr -d \ n:"
+          terraform output -raw aks_kube_config | base64 | tr -d '\n'
+        # No KUBECONFIG env needed here, as it's set globally via GITHUB_ENV
+
       - name: Debug - Check Kubeconfig (OPTIONAL)
         run: |
           ls -l ~/.kube/
