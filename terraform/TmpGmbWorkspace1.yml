@@ -1,23 +1,48 @@
-- name: Set up Kubeconfig for AKS
-  run: |
-    mkdir -p ~/.kube
-    echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" | base64 -d > ~/.kube/config
-    chmod 600 ~/.kube/config
+      # --- 2. Extract Outputs from Terraform ---
+      - name: Get Terraform Outputs
+        id: terraform_outputs # This step's ID is used to reference its outputs IN SUBSEQUENT STEPS
+        run: |
+          cd terraform # Ensure you are in the terraform directory to get outputs from state
+          
+          # Retrieve all Terraform outputs as a JSON string
+          TERRAFORM_OUTPUTS=$(terraform output -json)
+          
+          # Debugging: Print raw Terraform outputs JSON for inspection
+          echo "--- Debug: Raw Terraform Outputs JSON ---"
+          echo "$TERRAFORM_OUTPUTS" | jq .
+          echo "--- End Debug ---"
 
+          # Extract each output value into a TEMPORARY SHELL VARIABLE
+          # This variable is available ONLY within this 'run' script
+          # Use default empty string if jq finds no value to prevent errors
+          IOT_SIMULATOR_DEVICE_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_simulator_device_name.value // ""')
+          AKS_KUBECFG_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.aks_kube_config.value // ""')
+          ACR_LOGIN_SERVER_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.acr_login_server.value // ""')
+          IOT_HUB_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_hub_name.value // ""')
+          RESOURCE_GROUP_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.resource_group_name.value // ""')
 
-    # --- 2. Extract Outputs from Terraform ---
-- name: Get Terraform Outputs (all except for IOTHUB_DEVICE_CONNECTION_STRING)
-  id: terraform_outputs
-  run: |
-    TERRAFORM_OUTPUTS=$(terraform output -json)
+          # Now, write these shell variables to GITHUB_OUTPUT.
+          # These become available as steps.terraform_outputs.outputs.* in LATER steps.
+          echo "IOT_SIMULATOR_DEVICE_NAME=$IOT_SIMULATOR_DEVICE_NAME_VALUE" >> "$GITHUB_OUTPUT"
+          echo "AKS_KUBECFG=$AKS_KUBECFG_VALUE" >> "$GITHUB_OUTPUT"
+          echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER_VALUE" >> "$GITHUB_OUTPUT"
+          echo "IOT_HUB_NAME=$IOT_HUB_NAME_VALUE" >> "$GITHUB_OUTPUT"
+          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME_VALUE" >> "$GITHUB_OUTPUT"
 
-    # Output names must match usage later exactly (case-sensitive)
-    echo "IOT_SIMULATOR_DEVICE_NAME=$(echo $TERRAFORM_OUTPUTS | jq -r '.iot_simulator_device_name.value')" >> $GITHUB_OUTPUT
+          # Debugging: Print the TEMPORARY SHELL VARIABLES to confirm they hold values
+          # This is the correct way to debug outputs within the SAME step.
+          echo "--- Debug: Values of shell variables set in this step ---"
+          echo "IOT_SIMULATOR_DEVICE_NAME_VALUE: '$IOT_SIMULATOR_DEVICE_NAME_VALUE'"
+          echo "AKS_KUBECFG_VALUE: (Truncated for brevity, check raw JSON if needed)"
+          echo "$AKS_KUBECFG_VALUE" | head -n 5 # Print first 5 lines of kubeconfig for verification
+          echo "ACR_LOGIN_SERVER_VALUE: '$ACR_LOGIN_SERVER_VALUE'"
+          echo "IOT_HUB_NAME_VALUE: '$IOT_HUB_NAME_VALUE'"
+          echo "RESOURCE_GROUP_NAME_VALUE: '$RESOURCE_GROUP_NAME_VALUE'"
+          echo "--- End Debug ---"
 
-    # NOTE: No base64 encoding here — Terraform already returns it encoded
-    echo "AKS_KUBECFG=$(echo $TERRAFORM_OUTPUTS | jq -r '.aks_kube_config.value')" >> $GITHUB_OUTPUT
-
-    echo "ACR_LOGIN_SERVER=$(echo $TERRAFORM_OUTPUTS | jq -r '.acr_login_server.value')" >> $GITHUB_OUTPUT
-    echo "IOT_HUB_NAME=$(echo $TERRAFORM_OUTPUTS | jq -r '.iot_hub_name.value')" >> $GITHUB_OUTPUT
-    echo "RESOURCE_GROUP_NAME=$(echo $TERRAFORM_OUTPUTS | jq -r '.resource_group_name.value')" >> $GITHUB_OUTPUT
-  working-directory: ./terraform
+          # Remove the problematic lines that attempted to read step outputs within the same step:
+          # echo "Outputting steps.terraform_outputs.outputs.aks_kube_config"
+          # echo "${{ steps.terraform_outputs.outputs.aks_kube_config }}"
+          # echo "Outputting steps.terraform_outputs.outputs.AKS_KUBECFG"
+          # echo "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}"
+        working-directory: ./terraform
