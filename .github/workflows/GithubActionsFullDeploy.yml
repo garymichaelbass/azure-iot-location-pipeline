@@ -189,7 +189,7 @@ jobs:
           echo "$TERRAFORM_OUTPUTS" | jq .
           echo "--- End Debug ---"
 
-          # Extract each output value into a TEMPORARY SHELL VARIABLE
+          # Extract each output value into a TEMPORARY SHELL VARIABLE 
           # This variable is available ONLY within this 'run' script
           # Use default empty string if jq finds no value to prevent errors
           IOT_SIMULATOR_DEVICE_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_simulator_device_name.value // ""')
