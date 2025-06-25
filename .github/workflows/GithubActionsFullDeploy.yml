@@ -179,7 +179,7 @@ jobs:
         id: terraform_outputs
         run: |    
           
-          cd terraform # Ensure you are in the terraform directory to get outputs from state
+          # cd terraform # Ensure you are in the terraform directory to get outputs from state
           
           # Retrieve all Terraform outputs as a JSON string
           TERRAFORM_OUTPUTS=$(terraform output -json)
