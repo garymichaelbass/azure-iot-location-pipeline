@@ -5,7 +5,7 @@ resource "azurerm_dashboard_grafana" "iot_grafana" {
   name                   = "${var.prefix}-grafana"
   location               = var.location
   resource_group_name    = var.resource_group_name
-  grafana_major_version  = 10
+  grafana_major_version  = 11
 
   identity {
     type = "SystemAssigned"
