@@ -1,6 +1,6 @@
 # azure-iot-location-monitoring\terraform\main.tf
 
-# Define the Azure resource group to serve as the container for all deployment resources.
+# Define the Azure resource group to serve as the container for all deployment resources. 
 resource "azurerm_resource_group" "iot_resource_group" {
   name     = var.resource_group_name
   location = var.location
