@@ -40,100 +40,6 @@ jobs:
         run: terraform init -upgrade
         working-directory: ./terraform
 
-      # control + / = comment
-      # control + / = uncomment
-      # - name: Force Unlock Terraform State (on failure/cancel with specific ID)
-      #   if: ${{ failure() || cancelled() }} # This condition checks the overall job status
-      #   run: |
-      #     echo "Attempting to find and force unlock the Terraform state lock ID..."
-
-      #     TF_BACKEND_ACCOUNT_NAME="iotlocationmon20250621"
-      #     TF_BACKEND_CONTAINER_NAME="tfstate"
-      #     TF_STATE_BLOB_KEY="iot-solution.tfstate"
-
-      #     LOCK_ID=$(az storage blob metadata show \
-      #       --account-name "$TF_BACKEND_ACCOUNT_NAME" \
-      #       --container-name "$TF_BACKEND_CONTAINER_NAME" \
-      #       --name "$TF_STATE_BLOB_KEY" \
-      #       --query "metadata.terraformlockid" \
-      #       --output tsv 2>/dev/null)
-
-      #     if [ -n "$LOCK_ID" ]; then
-      #       echo "💡 Found active lock ID: $LOCK_ID from Azure Storage metadata. Attempting force unlock..."
-      #       terraform force-unlock -force "$LOCK_ID" || {
-      #         echo "⚠️ Warning: terraform force-unlock failed for ID $LOCK_ID. It might already be cleared or another issue exists."
-      #       }
-      #       echo "✅ Terraform force-unlock command completed for ID: $LOCK_ID."
-      #     else
-      #       echo "✅ No active lock ID found in Azure Storage metadata for '$TF_STATE_BLOB_KEY'. No unlock needed."
-      #     fi
-      #   working-directory: ./terraform
-      #   # `env` variables for ARM_CLIENT_ID etc. are inherited from the job level, which is sufficient here.
-
-      # - name: Force Unlock State (preemptive before apply)
-      #   if: always()
-      #   shell: bash
-      #   run: |
-      #     echo "🔐 Checking Azure Storage metadata for stale Terraform lock..."
-
-      #     STORAGE_ACCOUNT="iotlocationmon20250621"
-      #     CONTAINER_NAME="tfstate"
-      #     STATE_BLOB="iot-solution.tfstate"
-
-      #     LOCK_ID=$(az storage blob metadata show \
-      #       --account-name "$STORAGE_ACCOUNT" \
-      #       --container-name "$CONTAINER_NAME" \
-      #       --name "$STATE_BLOB" \
-      #       --query "metadata.terraformlockid" \
-      #       --output tsv 2>/dev/null || echo "")
-
-      #     if [ -n "$LOCK_ID" ]; then
-      #       echo "💡 Found existing lock ID: $LOCK_ID — forcing unlock..."
-      #       terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Unlock failed or already cleared."
-      #     else
-      #       echo "✅ No stale lock found. Proceeding to apply."
-      #     fi
-      #   working-directory: ./terraform
-      #   env:
-      #     ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      #     ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      #     ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      #     ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        
-      # - name: Force break Azure Blob lease if locked
-      #   if: always()
-      #   shell: bash
-      #   run: |
-      #     echo "🔐 Checking blob lease status..."
-
-      #     STORAGE_ACCOUNT="iotlocationmon20250621"
-      #     CONTAINER_NAME="tfstate"
-      #     STATE_BLOB="iot-solution.tfstate"
-
-      #     LEASE_STATE=$(az storage blob show \
-      #       --account-name "$STORAGE_ACCOUNT" \
-      #       --container-name "$CONTAINER_NAME" \
-      #       --name "$STATE_BLOB" \
-      #       --query "properties.lease.state" \
-      #       --output tsv)
-
-      #     if [ "$LEASE_STATE" == "leased" ]; then
-      #       echo "💡 Blob is leased — breaking lease to unlock state..."
-      #       az storage blob lease break \
-      #         --account-name "$STORAGE_ACCOUNT" \
-      #         --container-name "$CONTAINER_NAME" \
-      #         --blob "$STATE_BLOB" \
-      #         --output none || echo "⚠️ Lease break failed or already cleared."
-      #     else
-      #       echo "✅ Blob is not currently leased. No unlock needed."
-      #     fi
-      #   working-directory: ./terraform
-      #   env:
-      #     ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      #     ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      #     ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      #     ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}  
-
       - name: Conditionally import resource group if it exists
         run: |
           RG_NAME="iot-location-rg"
@@ -181,9 +87,9 @@ jobs:
           TERRAFORM_OUTPUTS=$(terraform output -json)
           
           # Debugging: Print raw Terraform outputs JSON for inspection
-          echo "--- Debug: Raw Terraform Outputs JSON ---"
+          echo "--- Debug One: Raw Terraform Outputs JSON ---"
           echo "$TERRAFORM_OUTPUTS" | jq .
-          echo "--- End Debug ---"
+          echo "--- End Debug One ---"
 
           # Extract each output value into a TEMPORARY SHELL VARIABLE
           # This variable is available ONLY within this 'run' script.
@@ -204,15 +110,15 @@ jobs:
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME_VALUE" >> "$GITHUB_OUTPUT"
 
           # Debugging: Print the TEMPORARY SHELL VARIABLES to confirm they hold values
-          echo "--- Debug: Values of shell variables set in this step ---"
+          echo "--- Debug Two: Values of shell variables set in this step ---"
           echo "IOT_SIMULATOR_DEVICE_NAME_VALUE: '$IOT_SIMULATOR_DEVICE_NAME_VALUE'"
           echo "AKS_KUBECFG_VALUE: (Truncated for brevity, check raw JSON if needed)"
           # When printing this for debug, it will still show literal '\n' as a two-character sequence
           echo "$AKS_KUBECFG_VALUE" | head -n 5 
           echo "ACR_LOGIN_SERVER_VALUE: '$ACR_LOGIN_SERVER_VALUE'"
           echo "IOT_HUB_NAME_VALUE: '$IOT_HUB_NAME_VALUE'"
-          echo "RESOURCE_GROUP_NAME_VALUE: '$RESOURCE_GROUP_NAME_VALUE'"
-          echo "--- End Debug ---"
+          echo "RESOURCE_GROUP_NAME_VALUE: '$RESOURCE_GROUPs_NAME_VALUE'"
+          echo "--- End Debug Two ---"
         working-directory: ./terraform
 
       - name: Get IoT device connection string via Azure CLI
@@ -260,13 +166,13 @@ jobs:
           # if other tools implicitly rely on it.
           echo "KUBECONFIG=$KUBECONFIG_PATH" >> "$GITHUB_ENV"
 
-          echo "--- Debug: Contents of $KUBECONFIG_PATH (after echo -e) ---"
+          echo "--- Debug Three: Contents of $KUBECONFIG_PATH (after echo -e) ---"
           cat "$KUBECONFIG_PATH" # Verify the content is now correctly formatted YAML
-          echo "--- End Debug ---"
+          echo "--- End Debug Three ---"
 
-          echo "--- Debug: kubectl get nodes output ---"
+          echo "--- Debug Four: kubectl get nodes output ---"
           kubectl get nodes --kubeconfig "$KUBECONFIG_PATH" # Explicitly use the kubeconfig path
-          echo "--- End Debug ---"
+          echo "--- End Debug Four ---"
 
       # --- 3. Docker Image Build and Push ---
       - name: Log in to Azure Container Registry
