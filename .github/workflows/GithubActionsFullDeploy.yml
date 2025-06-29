@@ -126,79 +126,6 @@ jobs:
           fi
 
 
-
-        #   echo "🚀 Running terraform apply..."
-        #   terraform apply -auto-approve > apply_output.log 2>&1
-        #   EXIT_CODE=$?
-
-        #   if [[ $EXIT_CODE -eq 0 ]]; then
-        #     echo "✅ Terraform apply succeeded."
-        #   else
-        #     echo "⚠️ Terraform apply failed. Checking for lock..."
-
-        #     LOCK_ID=$(grep -oP 'ID:\s+\K[0-9a-fA-F-]+' apply_output.log)
-
-        #     if [[ -n "$LOCK_ID" ]]; then
-        #       echo "🔓 Found lock ID: $LOCK_ID. Attempting force unlock..."
-        #       terraform force-unlock "$LOCK_ID"
-        #       echo "🔁 Retrying terraform apply..."
-        #       terraform apply -auto-approve
-        #     else
-        #       echo "❌ No lock ID found. Failing the job."
-        #       cat apply_output.log
-        #       exit 1
-        #     fi
-        #   fi
-        # working-directory: ./terraform
-        # shell: bash
-        # env:
-        #   TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
-        #   TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-        #   TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-        #   TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        #   ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        #   ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        #   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        #   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-        
-        #    if ! (terraform apply -auto-approve 2>&1 | tee terraform_apply_output.log); then
-        #       echo "Terraform apply failed!"
-        #       # Check if the error is due to state lock
-        #       if grep -q "Error acquiring the state lock" terraform_apply_output.log; then
-        #         echo "State lock error detected!"
-        #         LOCK_ID=$(grep "ID:" terraform_apply_output.log | head -n 1 | awk '{print $NF}')
-        #         if [ -n "$LOCK_ID" ]; then
-        #           echo "Detected Lock ID: $LOCK_ID"
-        #           echo "Attempting to force-unlock the state..."
-        #           if terraform force-unlock -force "$LOCK_ID" -no-color; then
-        #             echo "Successfully force-unlocked state with ID: $LOCK_ID"
-        #           else
-        #             echo "Error: Failed to force-unlock state with ID: $LOCK_ID. Aborting."
-        #             exit 1 # Exit if unlock itself failed
-        #           fi
-        #         else
-        #           echo "Error: State lock error detected but could not extract Lock ID. Aborting."
-        #           exit 1 # Abort if lock ID couldn't be found
-        #         fi
-        #       else
-        #         echo "Terraform apply failed for a reason other than state lock. Aborting."
-        #         exit 1 # Exit if failure is not a state lock
-        #       fi
-        #     else
-        #       echo "Terraform apply successful."
-        #     fi
-        # working-directory: ./terraform
-        # env:
-        #   TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
-        #   TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-        #   TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-        #   TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        #   ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        #   ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        #   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        #   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
       # --- 2. Extract Outputs from Terraform ---
       - name: Get Terraform Outputs
         id: terraform_outputs # This step's ID is used to reference its outputs IN SUBSEQUENT STEPS
@@ -343,6 +270,11 @@ jobs:
 
           kubectl apply -f ./kubernetes/simulator-deployment.yaml --kubeconfig "$KUBECONFIG_PATH"
           # kubectl apply -f ./kubernetes/simulator-service.yaml --kubeconfig "$KUBECONFIG_PATH" # Uncomment if you have this
+
+      - name: Restart IoT Simulator Deployment
+        run: |
+          KUBECONFIG_PATH="${{ github.workspace }}/kubeconfig.yaml"
+          kubectl rollout restart deployment iot-simulator --kubeconfig "$KUBECONFIG_PATH"
 
       - name: Verify Kubernetes Deployment
         run: |
