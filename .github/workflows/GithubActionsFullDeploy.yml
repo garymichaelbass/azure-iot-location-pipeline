@@ -41,89 +41,93 @@ jobs:
         run: terraform init -upgrade
         working-directory: ./terraform
 
-      - name: Conditionally import resource group if it exists
-        run: |
-          RG_NAME="iot-location-rg"
-          SUB_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+      # - name: Conditionally import resource group if it exists
+      #   run: |
+      #     RG_NAME="iot-location-rg"
+      #     SUB_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
-          echo "🔍 Checking if Resource Group '$RG_NAME' exists in Azure..."
-          if az group show --name "$RG_NAME" --output none 2>/dev/null; then
-            echo "✅ Resource group '$RG_NAME' exists."
-            if ! terraform state show azurerm_resource_group.iot_resource_group &>/dev/null; then
-              echo "🛠️ Importing '$RG_NAME' into Terraform state..."
-              terraform import azurerm_resource_group.iot_resource_group "/subscriptions/$SUB_ID/resourceGroups/$RG_NAME"
-            else
-              echo "🪪 Resource group already in Terraform state. No import needed."
-            fi
-          else
-            echo "❌ Resource group '$RG_NAME' does not exist in Azure. Skipping import."
-          fi
-        working-directory: ./terraform
-        shell: bash
-        env:
-          TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
-          TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-          TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-          TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Terraform Apply with Lock Recovery
+      #     echo "🔍 Checking if Resource Group '$RG_NAME' exists in Azure..."
+      #     if az group show --name "$RG_NAME" --output none 2>/dev/null; then
+      #       echo "✅ Resource group '$RG_NAME' exists."
+      #       if ! terraform state show azurerm_resource_group.iot_resource_group &>/dev/null; then
+      #         echo "🛠️ Importing '$RG_NAME' into Terraform state..."
+      #         terraform import azurerm_resource_group.iot_resource_group "/subscriptions/$SUB_ID/resourceGroups/$RG_NAME"
+      #       else
+      #         echo "🪪 Resource group already in Terraform state. No import needed."
+      #       fi
+      #     else
+      #       echo "❌ Resource group '$RG_NAME' does not exist in Azure. Skipping import."
+      #     fi
+      #   working-directory: ./terraform
+      #   shell: bash
+      #   env:
+      #     TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+      #     TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      #     TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+      #     TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+     
+      - name: Terraform Apply
         id: apply
-        run: |
-          APPLY_CMD="terraform apply -auto-approve"
-          APPLY_LOG="apply_output.log"
-          MAX_RETRIES=1 # Only one retry attempt after unlock
+        run: terraform apply -auto-approve 
 
-          perform_apply() {
-            echo "🚀 Running terraform apply..."
-            # Run apply, capture all output (stdout and stderr) to log file
-            # We use `|| true` to prevent the script from exiting immediately if apply fails,
-            # so we can check the logs for the lock ID.
-            ( $APPLY_CMD > "$APPLY_LOG" 2>&1 ) || true
-            return $? # Return the actual exit code of the apply command
-          }
+      # - name: Terraform Apply with Lock Recovery
+      #   id: apply
+      #   run: |
+      #     APPLY_CMD="terraform apply -auto-approve"
+      #     APPLY_LOG="apply_output.log"
+      #     MAX_RETRIES=1 # Only one retry attempt after unlock
 
-          # --- First attempt ---
-          perform_apply
-          FIRST_APPLY_EXIT_CODE=$?
+      #     perform_apply() {
+      #       echo "🚀 Running terraform apply..."
+      #       # Run apply, capture all output (stdout and stderr) to log file
+      #       # We use `|| true` to prevent the script from exiting immediately if apply fails,
+      #       # so we can check the logs for the lock ID.
+      #       ( $APPLY_CMD > "$APPLY_LOG" 2>&1 ) || true
+      #       return $? # Return the actual exit code of the apply command
+      #     }
 
-          if [[ $FIRST_APPLY_EXIT_CODE -eq 0 ]]; then
-            echo "✅ Terraform apply succeeded on first attempt."
-            exit 0 # Explicitly exit with success
-          else
-            echo "⚠️ Terraform apply failed on first attempt. Checking for lock..."
-            cat "$APPLY_LOG" # Print the full log for debugging
+      #     # --- First attempt ---
+      #     perform_apply
+      #     FIRST_APPLY_EXIT_CODE=$?
+
+      #     if [[ $FIRST_APPLY_EXIT_CODE -eq 0 ]]; then
+      #       echo "✅ Terraform apply succeeded on first attempt."
+      #       exit 0 # Explicitly exit with success
+      #     else
+      #       echo "⚠️ Terraform apply failed on first attempt. Checking for lock..."
+      #       cat "$APPLY_LOG" # Print the full log for debugging
             
-            LOCK_ID=$(grep -oP 'ID:\s+\K[0-9a-fA-F-]+' "$APPLY_LOG")
+      #       LOCK_ID=$(grep -oP 'ID:\s+\K[0-9a-fA-F-]+' "$APPLY_LOG")
 
-            if [[ -n "$LOCK_ID" ]]; then
-              echo "🔓 Found lock ID: $LOCK_ID. Attempting force unlock..."
-              if terraform force-unlock -force "$LOCK_ID" -no-color; then # Add -force
-                echo "✅ Successfully force-unlocked state with ID: $LOCK_ID."
-                echo "🔁 Retrying terraform apply..."
-                sleep 5 # Give backend a moment to clear
+      #       if [[ -n "$LOCK_ID" ]]; then
+      #         echo "🔓 Found lock ID: $LOCK_ID. Attempting force unlock..."
+      #         if terraform force-unlock -force "$LOCK_ID" -no-color; then # Add -force
+      #           echo "✅ Successfully force-unlocked state with ID: $LOCK_ID."
+      #           echo "🔁 Retrying terraform apply..."
+      #           sleep 5 # Give backend a moment to clear
 
-                # --- Retry attempt ---
-                perform_apply
-                RETRY_APPLY_EXIT_CODE=$?
+      #           # --- Retry attempt ---
+      #           perform_apply
+      #           RETRY_APPLY_EXIT_CODE=$?
 
-                if [[ $RETRY_APPLY_EXIT_CODE -eq 0 ]]; then
-                  echo "✅ Terraform apply succeeded on retry."
-                  exit 0 # Explicitly exit with success
-                else
-                  echo "❌ Terraform apply failed on retry. See logs above."
-                  exit 1 # Fail if retry also failed
-                fi
-              else
-                echo "❌ Failed to force-unlock state with ID: $LOCK_ID. Aborting."
-                exit 1 # Fail if unlock itself failed
-              fi
-            else
-              echo "❌ Terraform apply failed, but no lock ID found. Aborting."
-              echo "Full output of first failed apply:"
-              cat "$APPLY_LOG"
-              exit 1 # Fail if no lock and initial apply failed
-            fi
-          fi
+      #           if [[ $RETRY_APPLY_EXIT_CODE -eq 0 ]]; then
+      #             echo "✅ Terraform apply succeeded on retry."
+      #             exit 0 # Explicitly exit with success
+      #           else
+      #             echo "❌ Terraform apply failed on retry. See logs above."
+      #             exit 1 # Fail if retry also failed
+      #           fi
+      #         else
+      #           echo "❌ Failed to force-unlock state with ID: $LOCK_ID. Aborting."
+      #           exit 1 # Fail if unlock itself failed
+      #         fi
+      #       else
+      #         echo "❌ Terraform apply failed, but no lock ID found. Aborting."
+      #         echo "Full output of first failed apply:"
+      #         cat "$APPLY_LOG"
+      #         exit 1 # Fail if no lock and initial apply failed
+      #       fi
+      #     fi
 
 
       # --- 2. Extract Outputs from Terraform ---
