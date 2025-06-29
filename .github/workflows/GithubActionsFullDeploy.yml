@@ -69,6 +69,8 @@ jobs:
       - name: Terraform Apply
         id: apply
         run: terraform apply -auto-approve 
+        working-directory: ./terraform
+
 
       # - name: Terraform Apply with Lock Recovery
       #   id: apply
