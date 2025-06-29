@@ -17,6 +17,11 @@ spec:
         app: iot-simulator
     spec:
       containers:
+        # --- 4. Inject ACR login server into simulator-deployment.yaml ---
+        #    - name: Inject ACR login server into Kubernetes manifest
+        #      run: |
+        #        ACR=${{ steps.terraform_outputs.outputs.acr_login_server }}
+        #        sed -i "s|<your-registry>|$ACR|g" ./kubernetes/simulator-deployment.yaml
       - name: simulator
         # Replace <your-registry> with your actual container registry path
         image: <your-registry>/iot-simulator:latest

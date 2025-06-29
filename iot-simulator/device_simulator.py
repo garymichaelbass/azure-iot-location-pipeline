@@ -10,9 +10,11 @@ from azure.iot.device import IoTHubDeviceClient, Message
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
-# Replace with your actual connection string
-conn_str = "<Your IoT Hub Device Connection String>"
-device_id = "truck-001"
+import os
+
+conn_str = os.getenv("IOTHUB_DEVICE_CONNECTION_STRING")
+device_id = os.getenv("IOT_SIMULATOR_DEVICE_NAME", "sim-default-device")
+
 client = IoTHubDeviceClient.create_from_connection_string(conn_str)
 
 try:
