@@ -141,9 +141,9 @@ resource "azurerm_container_registry" "iot_acr" {
 # It is a security identity that allows applications or services to access Azure resources. 
 # It functions as a "service account" with specific permissions
 # It enables secure and controlled access to resources without using a user's credentials.
-# GMB data "azuread_service_principal" "github_sp" {
-#         display_name = "github-iot-acr-pusher"
-#      }
+data "azuread_service_principal" "github_sp" {
+  display_name = "github-iot-acr-pusher"
+}
 
 # Enable GitHub Actions to login into Registry utilizing ArcPush role
 resource "azurerm_role_assignment" "github_acr_push" {
