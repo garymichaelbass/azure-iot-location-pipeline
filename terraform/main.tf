@@ -133,7 +133,7 @@ resource "azurerm_container_registry" "iot_acr" {
   resource_group_name = var.resource_group_name
   location            = var.location
   sku                 = "Standard"
-  admin_enabled       = false
+  admin_enabled       = true
 }
 
 # azuread_service_principal: 
@@ -151,3 +151,16 @@ resource "azurerm_role_assignment" "github_acr_push" {
   role_definition_name = "AcrPush"
   principal_id         = data.azuread_service_principal.github_sp.object_id
 }
+
+# Assign AcrPull to the AKS cluster's SYSTEM-ASSIGNED IDENTITY
+resource "azurerm_role_assignment" "aks_cluster_acr_pull_permission" {
+  # Scope now refers to the resource being created by Terraform
+  scope                = azurerm_container_registry.iot_acr.id # <-- REFERENCE THE RESOURCE BLOCK
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_kubernetes_cluster.iot_aks_cluster.identity[0].principal_id
+  depends_on = [
+    azurerm_container_registry.iot_acr,
+    azurerm_kubernetes_cluster.iot_aks_cluster
+  ]
+}
+

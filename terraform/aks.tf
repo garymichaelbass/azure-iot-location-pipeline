@@ -78,30 +78,3 @@ resource "azurerm_monitor_data_collection_rule_association" "aks_dcra" {
   target_resource_id      = azurerm_kubernetes_cluster.iot_aks_cluster.id
   data_collection_rule_id = azurerm_monitor_data_collection_rule.aks_dcr.id
 }
-
-# (Ensure your actual resource block for ACR exists and is named azurerm_container_registry.iot_acr)
-# Example (if you don't have it elsewhere):
-resource "azurerm_container_registry" "iot_acr" {
-  name                = "azureiotlocationmonitoringregistry"
-  resource_group_name = azurerm_resource_group.iot_resource_group.name # Or hardcode "iot-location-rg"
-  location            = var.location
-  sku                 = "Standard"
-  admin_enabled       = true # Common to enable for CI/CD logins
-  tags = {
-    environment = var.environment
-    project     = var.project
-    owner       = var.owner
-  }
-}
-
-# Assign AcrPull to the AKS cluster's SYSTEM-ASSIGNED IDENTITY
-resource "azurerm_role_assignment" "aks_cluster_acr_pull_permission" {
-  # Scope now refers to the resource being created by Terraform
-  scope                = azurerm_container_registry.iot_acr.id # <-- REFERENCE THE RESOURCE BLOCK
-  role_definition_name = "AcrPull"
-  principal_id         = azurerm_kubernetes_cluster.iot_aks_cluster.identity[0].principal_id
-  depends_on = [
-    azurerm_container_registry.iot_acr,
-    azurerm_kubernetes_cluster.iot_aks_cluster
-  ]
-}
