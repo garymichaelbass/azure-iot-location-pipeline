@@ -66,25 +66,28 @@ jobs:
           TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
           TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Terraform Apply
+      - name: Terraform Apply with Lock Recovery
         id: apply
         run: |
-          set -e
+          echo "🚀 Running terraform apply..."
+          terraform apply -auto-approve > apply_output.log 2>&1
+          EXIT_CODE=$?
 
-          echo "Running terraform apply..."
-          if terraform apply -auto-approve; then
-            echo "Terraform apply succeeded."
+          if [[ $EXIT_CODE -eq 0 ]]; then
+            echo "✅ Terraform apply succeeded."
           else
-            echo "Terraform apply failed. Checking for lock..."
-            LOCK_ID=$(terraform apply -auto-approve 2>&1 | tee /tmp/tf_output.log | grep -oP 'ID:\s+\K[0-9a-fA-F-]+')
-            
+            echo "⚠️ Terraform apply failed. Checking for lock..."
+
+            LOCK_ID=$(grep -oP 'ID:\s+\K[0-9a-fA-F-]+' apply_output.log)
+
             if [[ -n "$LOCK_ID" ]]; then
-              echo "Found lock ID: $LOCK_ID. Attempting force unlock..."
+              echo "🔓 Found lock ID: $LOCK_ID. Attempting force unlock..."
               terraform force-unlock "$LOCK_ID"
-              echo "Retrying terraform apply..."
+              echo "🔁 Retrying terraform apply..."
               terraform apply -auto-approve
             else
-              echo "No lock ID found. Failing the job."
+              echo "❌ No lock ID found. Failing the job."
+              cat apply_output.log
               exit 1
             fi
           fi
