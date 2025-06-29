@@ -96,3 +96,9 @@ variable "github_subscription_id" {
   description = "The Azure subscription ID the service principal has access to"
   type        = string
 }
+
+variable "grafana_admin_principal_id" {
+  description = "The Azure AD Object ID of the user or group to assign Grafana Admin permissions."
+  type        = string
+  sensitive   = true # Best practice for IDs that grant access
+}

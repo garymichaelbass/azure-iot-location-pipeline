@@ -10,6 +10,7 @@ module "monitoring" {
   environment         = var.environment
   owner               = var.owner
   project             = var.project
+  grafana_admin_principal_id = var.grafana_admin_principal_id
 }
 
 module "databricks_iot" {
