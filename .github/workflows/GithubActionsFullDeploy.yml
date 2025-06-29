@@ -69,39 +69,97 @@ jobs:
       - name: Terraform Apply with Lock Recovery
         id: apply
         run: |
-          echo "🚀 Running terraform apply..."
-          terraform apply -auto-approve > apply_output.log 2>&1
-          EXIT_CODE=$?
+          APPLY_CMD="terraform apply -auto-approve"
+          APPLY_LOG="apply_output.log"
+          MAX_RETRIES=1 # Only one retry attempt after unlock
 
-          if [[ $EXIT_CODE -eq 0 ]]; then
-            echo "✅ Terraform apply succeeded."
+          perform_apply() {
+            echo "🚀 Running terraform apply..."
+            # Run apply, capture all output (stdout and stderr) to log file
+            # We use `|| true` to prevent the script from exiting immediately if apply fails,
+            # so we can check the logs for the lock ID.
+            ( $APPLY_CMD > "$APPLY_LOG" 2>&1 ) || true
+            return $? # Return the actual exit code of the apply command
+          }
+
+          # --- First attempt ---
+          perform_apply
+          FIRST_APPLY_EXIT_CODE=$?
+
+          if [[ $FIRST_APPLY_EXIT_CODE -eq 0 ]]; then
+            echo "✅ Terraform apply succeeded on first attempt."
+            exit 0 # Explicitly exit with success
           else
-            echo "⚠️ Terraform apply failed. Checking for lock..."
-
-            LOCK_ID=$(grep -oP 'ID:\s+\K[0-9a-fA-F-]+' apply_output.log)
+            echo "⚠️ Terraform apply failed on first attempt. Checking for lock..."
+            cat "$APPLY_LOG" # Print the full log for debugging
+            
+            LOCK_ID=$(grep -oP 'ID:\s+\K[0-9a-fA-F-]+' "$APPLY_LOG")
 
             if [[ -n "$LOCK_ID" ]]; then
               echo "🔓 Found lock ID: $LOCK_ID. Attempting force unlock..."
-              terraform force-unlock "$LOCK_ID"
-              echo "🔁 Retrying terraform apply..."
-              terraform apply -auto-approve
+              if terraform force-unlock -force "$LOCK_ID" -no-color; then # Add -force
+                echo "✅ Successfully force-unlocked state with ID: $LOCK_ID."
+                echo "🔁 Retrying terraform apply..."
+                sleep 5 # Give backend a moment to clear
+
+                # --- Retry attempt ---
+                perform_apply
+                RETRY_APPLY_EXIT_CODE=$?
+
+                if [[ $RETRY_APPLY_EXIT_CODE -eq 0 ]]; then
+                  echo "✅ Terraform apply succeeded on retry."
+                  exit 0 # Explicitly exit with success
+                else
+                  echo "❌ Terraform apply failed on retry. See logs above."
+                  exit 1 # Fail if retry also failed
+                fi
+              else
+                echo "❌ Failed to force-unlock state with ID: $LOCK_ID. Aborting."
+                exit 1 # Fail if unlock itself failed
+              fi
             else
-              echo "❌ No lock ID found. Failing the job."
-              cat apply_output.log
-              exit 1
+              echo "❌ Terraform apply failed, but no lock ID found. Aborting."
+              echo "Full output of first failed apply:"
+              cat "$APPLY_LOG"
+              exit 1 # Fail if no lock and initial apply failed
             fi
           fi
-        working-directory: ./terraform
-        shell: bash
-        env:
-          TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
-          TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-          TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-          TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+
+
+        #   echo "🚀 Running terraform apply..."
+        #   terraform apply -auto-approve > apply_output.log 2>&1
+        #   EXIT_CODE=$?
+
+        #   if [[ $EXIT_CODE -eq 0 ]]; then
+        #     echo "✅ Terraform apply succeeded."
+        #   else
+        #     echo "⚠️ Terraform apply failed. Checking for lock..."
+
+        #     LOCK_ID=$(grep -oP 'ID:\s+\K[0-9a-fA-F-]+' apply_output.log)
+
+        #     if [[ -n "$LOCK_ID" ]]; then
+        #       echo "🔓 Found lock ID: $LOCK_ID. Attempting force unlock..."
+        #       terraform force-unlock "$LOCK_ID"
+        #       echo "🔁 Retrying terraform apply..."
+        #       terraform apply -auto-approve
+        #     else
+        #       echo "❌ No lock ID found. Failing the job."
+        #       cat apply_output.log
+        #       exit 1
+        #     fi
+        #   fi
+        # working-directory: ./terraform
+        # shell: bash
+        # env:
+        #   TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+        #   TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        #   TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+        #   TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        #   ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        #   ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        #   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        #   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
         
         #    if ! (terraform apply -auto-approve 2>&1 | tee terraform_apply_output.log); then
