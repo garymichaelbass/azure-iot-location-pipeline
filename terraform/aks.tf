@@ -96,4 +96,11 @@ resource "azurerm_role_assignment" "kubelet_acr_pull" {
   scope                = data.azurerm_container_registry.iot_acr.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_kubernetes_cluster.iot_aks_cluster.kubelet_identity[0].object_id
+
+  # Explicit dependencies ensure ACR and AKS are created before attempting role assignment.
+  depends_on = [
+    azurerm_container_registry.iot_acr,
+    azurerm_kubernetes_cluster.iot_aks_cluster
+  ]
+
 }
