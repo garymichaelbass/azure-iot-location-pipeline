@@ -95,7 +95,8 @@ data "azurerm_container_registry" "iot_acr" {
 resource "azurerm_role_assignment" "kubelet_acr_pull" {
   scope                = data.azurerm_container_registry.iot_acr.id
   role_definition_name = "AcrPull"
-  principal_id         = azurerm_kubernetes_cluster.iot_aks_cluster.kubelet_identity[0].object_id
+  # GMB_Delete_Later  principal_id         = azurerm_kubernetes_cluster.iot_aks_cluster.kubelet_identity[0].object_id
+  principal_id         = azurerm_kubernetes_cluster.iot_aks_cluster.identity[0].principal_id # <-- CORRECTED LINE
 
   # Explicit dependencies ensure ACR and AKS are created before attempting role assignment.
   depends_on = [
