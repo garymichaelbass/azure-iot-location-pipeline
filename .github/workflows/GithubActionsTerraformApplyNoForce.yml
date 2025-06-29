@@ -1,6 +1,6 @@
 # azure-iot-location-monitoring\.github\workflows\GithubActionsFullDeploy.yml
 
-name: GitHub Actions Full IoT Solution Deployment
+name: GitHub Actions Terraform Apply No Force
 
 on:
   workflow_dispatch:  # Manual trigger from GitHub UI
