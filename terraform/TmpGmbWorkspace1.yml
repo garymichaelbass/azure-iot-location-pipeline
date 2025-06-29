@@ -1,24 +1,23 @@
-# azure-iot-location-monitoring\terraform\aks.tf
-# ... (rest of your AKS-related resources) ...
+# In your aks.tf or a dedicated role_assignments.tf file
 
 # Assign AcrPull to the AKS cluster's SYSTEM-ASSIGNED IDENTITY (control plane identity)
 # This is the identity that AKS uses to pull images from ACR.
 resource "azurerm_role_assignment" "aks_cluster_acr_pull_permission" {
-  # The scope is your Azure Container Registry
+  # The scope is your Azure Container Registry.
+  # Ensure `iot_acr` is either a data source pointing to your existing ACR
+  # or it's the resource defining your ACR in your Terraform.
   scope                = azurerm_container_registry.iot_acr.id
-
-  # This is the built-in Azure role that grants permission to pull images from ACR.
-  role_definition_name = "AcrPull"
-
-  # Use the main cluster identity, NOT the kubelet identity.
-  principal_id         = azurerm_kubernetes_cluster.iot_aks_cluster.identity[0].principal_id # <-- CORRECTED LINE
-
+  
+  # This is the built-in Azure role that grants permission to pull images.
+  role_definition_name = "AcrPull" 
+  
+  # **THIS IS THE CRITICAL PART:** Use the main cluster identity.
+  # NOT .kubelet_identity[0].object_id
+  principal_id         = azurerm_kubernetes_cluster.iot_aks_cluster.identity[0].principal_id 
+  
   # Explicit dependencies ensure ACR and AKS are created before attempting role assignment.
   depends_on = [
-    azurerm_container_registry.iot_acr,
+    azurerm_container_registry.iot_acr, # Or azurerm_container_registry.your_acr_resource_name if it's not a data source
     azurerm_kubernetes_cluster.iot_aks_cluster
   ]
 }
-
-# You can keep your existing 'data "azurerm_container_registry" "iot_acr"' block if it's already there
-# or replace it if your ACR is also created by Terraform in this config.
