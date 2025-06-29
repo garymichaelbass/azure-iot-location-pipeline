@@ -84,3 +84,16 @@ resource "azurerm_monitor_data_collection_rule_association" "aks_dcra" {
   target_resource_id      = azurerm_kubernetes_cluster.iot_aks_cluster.id
   data_collection_rule_id = azurerm_monitor_data_collection_rule.aks_dcr.id
 }
+
+# Look up the existing ACR
+data "azurerm_container_registry" "iot_acr" {
+  name                = "azureiotlocationmonitoringregistry"
+  resource_group_name = "iot-location-rg"
+}
+
+# Assign AcrPull to the AKS kubelet identity
+resource "azurerm_role_assignment" "kubelet_acr_pull" {
+  scope                = data.azurerm_container_registry.iot_acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_kubernetes_cluster.iot_aks_cluster.kubelet_identity[0].object_id
+}
