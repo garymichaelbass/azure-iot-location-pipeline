@@ -1,6 +1,6 @@
 # azure-iot-location-monitoring\.github\workflows\GithubActionsFullDeploy.yml
 
-name: GitHub Actions Terraform Apply No Force
+name: GitHub Actions Full IoT Solution Deployment
 
 on:
   workflow_dispatch:  # Manual trigger from GitHub UI
@@ -41,10 +41,35 @@ jobs:
         run: terraform init -upgrade
         working-directory: ./terraform
 
+      - name: Conditionally import resource group if it exists
+        run: |
+          RG_NAME="iot-location-rg"
+          SUB_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+
+          echo "🔍 Checking if Resource Group '$RG_NAME' exists in Azure..."
+          if az group show --name "$RG_NAME" --output none 2>/dev/null; then
+            echo "✅ Resource group '$RG_NAME' exists."
+            if ! terraform state show azurerm_resource_group.iot_resource_group &>/dev/null; then
+              echo "🛠️ Importing '$RG_NAME' into Terraform state..."
+              terraform import azurerm_resource_group.iot_resource_group "/subscriptions/$SUB_ID/resourceGroups/$RG_NAME"
+            else
+              echo "🪪 Resource group already in Terraform state. No import needed."
+            fi
+          else
+            echo "❌ Resource group '$RG_NAME' does not exist in Azure. Skipping import."
+          fi
+        working-directory: ./terraform
+        shell: bash
+        env:
+          TF_VAR_github_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+          TF_VAR_github_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          TF_VAR_github_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+          TF_VAR_github_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Terraform Apply with Lock Recovery
         id: apply
-        run: |
-          terraform apply -auto-approve
+        run: terraform apply -auto-approve      
+
 
       # --- 2. Extract Outputs from Terraform ---
       - name: Get Terraform Outputs
