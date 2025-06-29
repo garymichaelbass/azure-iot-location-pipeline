@@ -23,12 +23,6 @@ resource "azurerm_kubernetes_cluster" "iot_aks_cluster" {
   kubernetes_version  = "1.32.4"
 
   default_node_pool {
-    /* Prior to 20250623
-    name       = "default"
-    node_count = var.aks_node_count
-    vm_size    = var.aks_node_vm_size
-    temporary_name_for_rotation = "tmpnodepool1"
-    */
     name       = "default"
     node_count = 1
     vm_size    = "Standard_B2ms"
