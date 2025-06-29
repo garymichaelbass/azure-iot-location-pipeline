@@ -104,7 +104,11 @@ jobs:
           # Now, write these shell variables to GITHUB_OUTPUT.
           # These become available as steps.terraform_outputs.outputs.* in LATER steps.
           echo "IOT_SIMULATOR_DEVICE_NAME=$IOT_SIMULATOR_DEVICE_NAME_VALUE" >> "$GITHUB_OUTPUT"
-          echo "AKS_KUBECFG=$AKS_KUBECFG_VALUE" >> "$GITHUB_OUTPUT" # This will contain literal \n
+
+          echo "AKS_KUBECFG<<EOF" >> "$GITHUB_OUTPUT"           # Adapt to kubecfg being multi-line
+          echo "$AKS_KUBECFG_VALUE" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
           echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER_VALUE" >> "$GITHUB_OUTPUT"
           echo "IOT_HUB_NAME=$IOT_HUB_NAME_VALUE" >> "$GITHUB_OUTPUT"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME_VALUE" >> "$GITHUB_OUTPUT"
@@ -117,7 +121,7 @@ jobs:
           echo "$AKS_KUBECFG_VALUE" | head -n 5 
           echo "ACR_LOGIN_SERVER_VALUE: '$ACR_LOGIN_SERVER_VALUE'"
           echo "IOT_HUB_NAME_VALUE: '$IOT_HUB_NAME_VALUE'"
-          echo "RESOURCE_GROUP_NAME_VALUE: '$RESOURCE_GROUPs_NAME_VALUE'"
+          echo "RESOURCE_GROUP_NAME_VALUE: '$RESOURCE_GROUP_NAME_VALUE'"
           echo "--- End Debug Two ---"
         working-directory: ./terraform
 
