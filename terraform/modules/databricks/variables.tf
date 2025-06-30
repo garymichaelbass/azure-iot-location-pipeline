@@ -16,3 +16,8 @@ variable "eventhub_connection_string" {
   type        = string
   sensitive   = true
 }
+
+variable "databricks_workspace_url" {
+  type        = string
+  description = "URL of the Azure Databricks workspace"
+}

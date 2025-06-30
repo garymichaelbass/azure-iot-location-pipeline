@@ -1,5 +1,13 @@
 # azure-iot-location-monitoring\terraform\modules\databricks\notebook.py
 
+# The following addresses the error of "dbutils is not defined (Pylance)"
+# eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
+try:
+    dbutils.widgets.get
+except NameError:
+    from types import SimpleNamespace
+    dbutils = SimpleNamespace(widgets=SimpleNamespace(get=lambda x: "<placeholder>"))
+
 # Databricks notebook to read from Event Hub and write to Cosmos DB
 
 # Import necessary types for defining the schema of the incoming data
@@ -28,8 +36,10 @@ schema = StructType() \
 # The 'eventhubs.connectionString' parameter is crucial and must be replaced
 # with the actual Event Hub-compatible connection string, which grants access
 # to read messages from the Event Hub.
+eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
+
 ehConf = {
-    'eventhubs.connectionString': var.eventhub_connection_string
+    'eventhubs.connectionString': eventhub_connection_string
 }
 
 print("📡 Event Hub configuration loaded:")

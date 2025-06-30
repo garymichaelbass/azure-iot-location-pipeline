@@ -14,3 +14,7 @@ output "databricks_notebook_path" {
   description = "The full path where the notebook was uploaded in Databricks."
   value       = databricks_notebook.iot_notebook.path
 }
+
+output "databricks_workspace_url_output" {
+  value = databricks_workspace.this.workspace_url
+}
