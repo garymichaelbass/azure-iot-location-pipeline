@@ -1,3 +1,5 @@
+# azure-iot-location-monitoring\terraform\modules\databricks\outputs.tf
+
 output "databricks_cluster_id" {
   description = "The ID of the provisioned Databricks cluster."
   value       = databricks_cluster.iot_cluster.id
