@@ -83,7 +83,6 @@ jobs:
           IOT_HUB_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_hub_name.value // ""')
           RESOURCE_GROUP_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.resource_group_name.value // ""')
           DATABRICKS_JOB_ID_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_job_id.value // ""')
-          # DATABRICKS_WORKSPACE_URL_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_workspace_url_value.value // ""' | sed 's|^https://||')
           DATABRICKS_WORKSPACE_URL_VALUE="https://$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_workspace_url_value.value // ""')"
 
           # Now, write these shell variables to GITHUB_OUTPUT.
@@ -100,7 +99,6 @@ jobs:
 
           echo "DATABRICKS_JOB_ID=$DATABRICKS_JOB_ID_VALUE" >> "$GITHUB_OUTPUT"
           echo "DATABRICKS_WORKSPACE_URL=$DATABRICKS_WORKSPACE_URL_VALUE" >> "$GITHUB_OUTPUT"
-          echo "DATABRICKS_WORKSPACE_URL_NO_SED=$DATABRICKS_WORKSPACE_URL_NO_SED_VALUE" >> "$GITHUB_OUTPUT"
 
           # Debugging: Print the TEMPORARY SHELL VARIABLES to confirm they hold values
           echo "--- Debug Two: Values of shell variables set in this step ---"
@@ -228,16 +226,17 @@ jobs:
           kubectl get deployments iot-simulator --kubeconfig "$KUBECONFIG_PATH"
           # kubectl get services iot-simulator --kubeconfig "$KUBECONFIG_PATH" # Uncomment if you have this
 
-      - name: Install Databricks CLI
-        run: pip install databricks-cli
+      - name: Install New Databricks CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | bash
 
       - name: Trigger Databricks Job
         env:
-          # DATABRICKS_HOST: https://${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_URL }}
           DATABRICKS_HOST: ${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_URL }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }}
         run: | 
           echo "🔍 Triggering Databricks job..."
           echo "DATABRICKS_HOST: $DATABRICKS_HOST"
           echo "DATABRICKS_JOB_ID: ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
-          databricks jobs run-now --job-id ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_IB }}
+          echo "DATABRICKS_JOB_ID: $DATABRICKS_JOB_ID"
+          databricks jobs run-now --job-id ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}

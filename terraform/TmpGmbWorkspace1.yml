@@ -1,4 +1,13 @@
-steps.terraform_outputs.outputs.databricks_workspace_url_output
+- name: Install New Databricks CLI
+  run: |
+    curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | bash
 
-          echo "DATABRICKS_JOB_ID_VALUE: '$DATABRICKS_JOB_ID_VALUE'" # Debug print
-          echo "DATABRICKS_WORKSPACE_HOST_VALUE: '$DATABRICKS_WORKSPACE_HOST_VALUE'" # Debug print
+- name: Trigger Databricks Job
+  env:
+    DATABRICKS_HOST: https://${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_URL }}
+    DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }}
+  run: |
+    echo "🔍 Triggering Databricks job..."
+    echo "DATABRICKS_HOST: $DATABRICKS_HOST"
+    echo "DATABRICKS_JOB_ID: ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
+    databricks jobs run-now --job-id ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
