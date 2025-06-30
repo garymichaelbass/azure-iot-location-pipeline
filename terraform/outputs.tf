@@ -53,3 +53,13 @@ output "databricks_notebook_debug_path" {
   value       = databricks_notebook.iot_notebook.path
   description = "Confirms the notebook was uploaded successfully."
 }
+
+output "databricks_job_run_url" {
+  description = "URL to monitor the Databricks job"
+  value       = "${azurerm_databricks_workspace.iot_databricks_workspace.workspace_url}#job/${module.databricks.job_id}"
+}
+
+output "notebook_full_path" {
+  description = "Uploaded path of the IoT notebook"
+  value       = module.databricks.notebook_path
+}

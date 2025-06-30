@@ -99,3 +99,16 @@ json_df.writeStream \
     .start()
 
 print("✅ Streaming pipeline initialized. Data is flowing!")
+
+# Surface stats like record volume, throughput, and termination alerts directly into job logs.
+from pyspark.sql.streaming import StreamingQueryListener
+
+class DebugListener(StreamingQueryListener):
+    def onQueryStarted(self, event):
+        print(f"🔄 Query started: {event.name}")
+    def onQueryProgress(self, event):
+        print(f"📈 Progress update: {event.progress.numInputRows} rows received")
+    def onQueryTerminated(self, event):
+        print(f"💥 Query terminated: {event.id}")
+
+spark.streams.addListener(DebugListener())
