@@ -15,7 +15,15 @@ resource "databricks_cluster" "iot_cluster" {
   cluster_name            = "iot-location-cluster"
   spark_version           = data.databricks_spark_version.latest_lts.id
   # node_type_id            = data.databricks_node_type.smallest.id
-  node_type_id            = "Standard_DS2_v2"
+  # Available node types (Databricks-compatible in East US 2):
+  # - Standard_E2s_v3 (2 vCPU, 16 GiB) → memory optimized
+  # - Standard_D2_v3  (2 vCPU, 8 GiB)  → general purpose
+  # - Standard_DS1_v2 (1 vCPU, 3.5 GiB) → lightweight test config ← ACTIVE
+  # - Standard_E2s_v5 (2 vCPU, 16 GiB) → newer gen, if quota allows 
+
+  # node_type_id            = "Standard_DS2_v2"
+  # node_type_id            = "Standard_B2s"
+  node_type_id            = "Standard_DS1_v2"
   autotermination_minutes = 30
   num_workers             = 1
 }
