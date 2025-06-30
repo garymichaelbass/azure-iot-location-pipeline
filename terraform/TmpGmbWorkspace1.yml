@@ -1,13 +1,20 @@
-- name: Install New Databricks CLI
-  run: |
-    curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | bash
-
 - name: Trigger Databricks Job
-  env:
-    DATABRICKS_HOST: https://${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_URL }}
-    DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }}
-  run: |
-    echo "🔍 Triggering Databricks job..."
-    echo "DATABRICKS_HOST: $DATABRICKS_HOST"
-    echo "DATABRICKS_JOB_ID: ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
-    databricks jobs run-now --job-id ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
+        env:
+          # DATABRICKS_HOST should be the URL *without* https:// for the CLI
+          # Your 'databricks_workspace_url_output' already provides this correctly from previous steps
+          DATABRICKS_HOST: ${{ steps.terraform_outputs.outputs.databricks_workspace_url_output }}
+
+          # Unset DATABRICKS_TOKEN to avoid conflict with Azure AD authentication.
+          # The Databricks CLI will pick up ARM_CLIENT_ID/SECRET/TENANT_ID from the environment.
+          DATABRICKS_TOKEN: '' # Set to an empty string to effectively unset it for this step
+
+          # Ensure Azure AD env vars are passed if not already global to the job
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }} # Inherit from job-level env if defined, or explicitly from secrets
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+        run: |
+          echo "🔍 Triggering Databricks job..."
+          echo "DATABRICKS_HOST (from GHA output): $DATABRICKS_HOST"
+          echo "DATABRICKS_JOB_ID (from GHA output): ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
+          # Use the new CLI command syntax (job ID as positional argument)
+          databricks jobs run-now ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
