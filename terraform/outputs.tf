@@ -43,3 +43,13 @@ output "acr_login_server" {
   description = "Login server URL for the Azure Container Registry"
   value       = azurerm_container_registry.iot_acr.login_server
 }
+
+output "databricks_job_run_link" {
+  value = "${azurerm_databricks_workspace.iot_databricks_workspace.workspace_url}#job/${module.databricks.job_id}"
+  description = "Direct URL to view the Databricks job."
+}
+
+output "databricks_notebook_debug_path" {
+  value       = databricks_notebook.iot_notebook.path
+  description = "Confirms the notebook was uploaded successfully."
+}

@@ -7,6 +7,14 @@ from pyspark.sql.types import StructType, StringType, DoubleType, LongType
 # Import functions for data transformation, specifically for parsing JSON
 from pyspark.sql.functions import from_json, col
 
+print("🔍 Initializing IoT telemetry pipeline...")
+
+import logging # Import logging module
+
+# Configure logging for the notebook
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.info("Notebook started: Initializing environment and configurations.")
+
 # Define the schema for the incoming JSON data from Event Hub.
 # This schema dictates the structure and data types of the telemetry messages
 # that are expected from the IoT devices.
@@ -24,6 +32,9 @@ ehConf = {
     'eventhubs.connectionString': var.eventhub_connection_string
 }
 
+print("📡 Event Hub configuration loaded:")
+print(ehConf)
+
 # Read streaming data from Azure Event Hubs.
 # 'spark.readStream' initiates a streaming DataFrame, and '.format("eventhubs")'
 # specifies the source. The options are passed from the `ehConf` dictionary.
@@ -34,11 +45,15 @@ try:
 except NameError:
     from pyspark.sql import SparkSession
     spark = SparkSession.builder.getOrCreate()
+
+    print("🚀 Spark session ready. Reading from Event Hub...")
     
 raw_df = spark.readStream \
     .format("eventhubs") \
     .options(**ehConf) \
     .load()
+
+print("✅ Successfully connected to Event Hub.")
 
 # Parse the raw Event Hub message body, which is a binary string, into a structured JSON format.
 # The 'body' column is first cast to a string, then 'from_json' is used to parse it
@@ -46,6 +61,8 @@ raw_df = spark.readStream \
 # and then '.select("data.*")' flattens the nested structure to bring all fields
 # directly into the `json_df` DataFrame.
 json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
+print("🧬 Schema after parsing:")
+json_df.printSchema()
 
 # Configure the connection and write details for Azure Cosmos DB.
 # This dictionary specifies where and how the processed data will be written.
@@ -63,6 +80,11 @@ cosmos_config = {
     "Upsert": "true"
 }
 
+print("💾 Preparing to write to Cosmos DB...")
+print("Cosmos config keys:", list(cosmos_config.keys()))
+
+logging.info(f"Cosmos DB configuration loaded for database: {cosmos_config['Database']}, collection: {cosmos_config['Collection']}")
+
 # Write the processed streaming data from `json_df` to Azure Cosmos DB.
 # '.writeStream' indicates a continuous write operation.
 # '.format("cosmos.oltp")' specifies the Cosmos DB connector for OLTP (transactional) workloads.
@@ -75,3 +97,5 @@ json_df.writeStream \
     .options(**cosmos_config) \
     .outputMode("append") \
     .start()
+
+print("✅ Streaming pipeline initialized. Data is flowing!")

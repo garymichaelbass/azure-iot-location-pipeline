@@ -1,6 +1,64 @@
-- name: Capture Terraform Outputs
-  id: terraform_outputs
-  run: |
-    echo "IOT_HUB_NAME=$(terraform output -raw iot_hub_name)" >> "$GITHUB_ENV"
-    echo "RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)" >> "$GITHUB_ENV"
-    echo "IOT_SIMULATOR_DEVICE_NAME=$(terraform output -raw iot_simulator_device_name)" >> "$GITHUB_ENV"
+# Databricks notebook to read from Event Hub and write to Cosmos DB (with debug logs)
+
+from pyspark.sql.types import StructType, StringType, DoubleType, LongType
+from pyspark.sql.functions import from_json, col
+
+print("🔍 Initializing IoT telemetry pipeline...")
+
+# Define the schema for the incoming JSON data
+schema = StructType() \
+    .add("deviceId", StringType()) \
+    .add("latitude", DoubleType()) \
+    .add("longitude", DoubleType()) \
+    .add("timestamp", LongType())
+
+# Event Hub config
+ehConf = {
+    'eventhubs.connectionString': var.eventhub_connection_string
+}
+
+print("📡 Event Hub configuration loaded:")
+print(ehConf)
+
+# Create or access the Spark session
+try:
+    spark
+except NameError:
+    from pyspark.sql import SparkSession
+    spark = SparkSession.builder.getOrCreate()
+
+print("🚀 Spark session ready. Reading from Event Hub...")
+
+# Read from Event Hub
+raw_df = spark.readStream \
+    .format("eventhubs") \
+    .options(**ehConf) \
+    .load()
+
+print("✅ Successfully connected to Event Hub.")
+
+# Parse Event Hub messages
+json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
+print("🧬 Schema after parsing:")
+json_df.printSchema()
+
+# Cosmos DB config
+cosmos_config = {
+    "Endpoint": var.cosmos_db_endpoint,
+    "Masterkey": var.cosmos_db_key,
+    "Database": "LocationDB",
+    "Collection": "DeviceLocations",
+    "Upsert": "true"
+}
+
+print("💾 Preparing to write to Cosmos DB...")
+print("Cosmos config keys:", list(cosmos_config.keys()))
+
+# Start the streaming job
+stream = json_df.writeStream \
+    .format("cosmos.oltp") \
+    .options(**cosmos_config) \
+    .outputMode("append") \
+    .start()
+
+print("✅ Streaming pipeline initialized. Data is flowing!")
