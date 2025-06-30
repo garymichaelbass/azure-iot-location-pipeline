@@ -231,6 +231,7 @@ jobs:
 
       - name: Trigger Databricks Job
         env:
-          DATABRICKS_HOST: https://${{ steps.terraform_outputs.outputs.databricks_workspace_url_output }}
+          # GMB DATABRICKS_HOST: https://${{ steps.terraform_outputs.outputs.databricks_workspace_url_output }}
+          DATABRICKS_HOST: ${{ steps.terraform_outputs.outputs.databricks_workspace_url_output }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }}
         run: databricks jobs run-now --job-id ${{ steps.terraform_outputs.outputs.databricks_job_id }}
