@@ -16,14 +16,22 @@ resource "databricks_cluster" "iot_cluster" {
   spark_version           = data.databricks_spark_version.latest_lts.id
   # node_type_id            = data.databricks_node_type.smallest.id
   # Available node types (Databricks-compatible in East US 2):
-  # - Standard_E2s_v3 (2 vCPU, 16 GiB) → memory optimized
-  # - Standard_D2_v3  (2 vCPU, 8 GiB)  → general purpose
-  # - Standard_DS1_v2 (1 vCPU, 3.5 GiB) → lightweight test config ← ACTIVE
-  # - Standard_E2s_v5 (2 vCPU, 16 GiB) → newer gen, if quota allows 
+  # ✅ Databricks-compatible node types for East US 2:
+  # - Standard_E2s_v3    (2 vCPU, 16 GiB) → memory optimized
+  # - Standard_D2_v3     (2 vCPU, 8 GiB)  → general purpose
+  # - Standard_DS1_v2    (1 vCPU, 3.5 GiB) → lightweight test config (deprecated in this workspace)
+  # - Standard_E2s_v5    (2 vCPU, 16 GiB) → newer gen, if quota allows
+  # - Standard_D3_v2     (4 vCPU, 14 GiB) → broadly supported, general purpose ← ✅ CURRENTLY SELECTED
+  # - Standard_DS3_v2    (4 vCPU, 14 GiB) → same as above with premium disk support
+  # - Standard_D4s_v3    (4 vCPU, 16 GiB) → strong general-purpose node, good CPU–RAM balance
+  # - Standard_E4s_v4    (4 vCPU, 32 GiB) → memory heavy Spark ETL or telemetry
+  # - Standard_E4ds_v5   (4 vCPU, 32 GiB) → newer gen, premium disk, quota-friendly
+
+  # GMB Google Gemini recommends Standard_D4s_v3
 
   # node_type_id            = "Standard_DS2_v2"
   # node_type_id            = "Standard_B2s"
-  node_type_id            = "Standard_DS1_v2"
+  node_type_id            = "Standard_DS3_v2"
   autotermination_minutes = 30
   num_workers             = 1
 }
