@@ -83,7 +83,8 @@ jobs:
           IOT_HUB_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_hub_name.value // ""')
           RESOURCE_GROUP_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.resource_group_name.value // ""')
           DATABRICKS_JOB_ID_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_job_id.value // ""')
-          DATABRICKS_WORKSPACE_HOST_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_workspace_url_output.value // ""' | sed 's|^https://||')
+          DATABRICKS_WORKSPACE_URL_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_workspace_url_output.value // ""' | sed 's|^https://||')
+          DATABRICKS_WORKSPACE_URL_NO_SED_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_workspace_url_output.value // ""')
 
           # Now, write these shell variables to GITHUB_OUTPUT.
           # These become available as steps.terraform_outputs.outputs.* in LATER steps.
@@ -98,7 +99,8 @@ jobs:
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME_VALUE" >> "$GITHUB_OUTPUT"
 
           echo "DATABRICKS_JOB_ID=$DATABRICKS_JOB_ID_VALUE" >> "$GITHUB_OUTPUT"
-          echo "DATABRICKS_WORKSPACE_HOST=$DATABRICKS_WORKSPACE_HOST_VALUE" >> "$GITHUB_OUTPUT"
+          echo "DATABRICKS_WORKSPACE_URL=$DATABRICKS_WORKSPACE_URL_VALUE" >> "$GITHUB_OUTPUT"
+          echo "DATABRICKS_WORKSPACE_URL_NO_SED=$DATABRICKS_WORKSPACE_URL_NO_SED_VALUE" >> "$GITHUB_OUTPUT"
 
           # Debugging: Print the TEMPORARY SHELL VARIABLES to confirm they hold values
           echo "--- Debug Two: Values of shell variables set in this step ---"
@@ -110,7 +112,8 @@ jobs:
           echo "IOT_HUB_NAME_VALUE: '$IOT_HUB_NAME_VALUE'"
           echo "RESOURCE_GROUP_NAME_VALUE: '$RESOURCE_GROUP_NAME_VALUE'"
           echo "DATABRICKS_JOB_ID_VALUE: '$DATABRICKS_JOB_ID_VALUE'" # Debug print
-          echo "DATABRICKS_WORKSPACE_HOST_VALUE: '$DATABRICKS_WORKSPACE_HOST_VALUE'" # Debug print
+          echo "DATABRICKS_WORKSPACE_URL_VALUE: '$DATABRICKS_WORKSPACE_URL_VALUE'" # Debug print
+          echo "DATABRICKS_WORKSPACE_URL_NO_SED_VALUE: '$DATABRICKS_WORKSPACE_URL_NO_SED_VALUE'" # Debug print
           echo "--- End Debug Two ---"
         working-directory: ./terraform
 
@@ -232,7 +235,8 @@ jobs:
       - name: Trigger Databricks Job
         env:
           # DATABRICKS_HOST: https://${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_URL_OUTPUT }}
-          DATABRICKS_HOST: ${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_HOST }}
+          DATABRICKS_HOST: ${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_URL }}
+          DATABRICKS_HOST_NO_SED: ${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_URL_NO_SED }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }}
         run: | 
           echo "🔍 Triggering Databricks job..."
