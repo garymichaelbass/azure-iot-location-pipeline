@@ -16,5 +16,5 @@ output "databricks_notebook_path" {
 }
 
 output "databricks_workspace_url_output" {
-  value = databricks_workspace.this.workspace_url
+  value = var.databricks_workspace_url
 }
