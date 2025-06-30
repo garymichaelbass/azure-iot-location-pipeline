@@ -77,13 +77,13 @@ jobs:
           # This variable is available ONLY within this 'run' script.
           # Use default empty string if jq finds no value to prevent errors.
           # AKS_KUBECFG_VALUE will hold the string with literal \n and \r sequences from Terraform output.
-          IOT_SIMULATOR_DEVICE_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_simulator_device_name.value // ""')
-          AKS_KUBECFG_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.aks_kube_config.value // ""')
-          ACR_LOGIN_SERVER_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.acr_login_server.value // ""')
-          IOT_HUB_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_hub_name.value // ""')
-          RESOURCE_GROUP_NAME_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.resource_group_name.value // ""')
-          DATABRICKS_JOB_ID_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_job_id.value // ""')
-          DATABRICKS_WORKSPACE_URL_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_workspace_url_output.value // ""' | sed 's|^https://||')
+          IOT_SIMULATOR_DEVICE_NAME_VALUE      =$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_simulator_device_name.value // ""')
+          AKS_KUBECFG_VALUE                    =$(echo "$TERRAFORM_OUTPUTS" | jq -r '.aks_kube_config.value // ""')
+          ACR_LOGIN_SERVER_VALUE               =$(echo "$TERRAFORM_OUTPUTS" | jq -r '.acr_login_server.value // ""')
+          IOT_HUB_NAME_VALUE                   =$(echo "$TERRAFORM_OUTPUTS" | jq -r '.iot_hub_name.value // ""')
+          RESOURCE_GROUP_NAME_VALUE            =$(echo "$TERRAFORM_OUTPUTS" | jq -r '.resource_group_name.value // ""')
+          DATABRICKS_JOB_ID_VALUE              =$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_job_id.value // ""')
+          DATABRICKS_WORKSPACE_URL_VALUE       =$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_workspace_url_output.value // ""' | sed 's|^https://||')
           DATABRICKS_WORKSPACE_URL_NO_SED_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_workspace_url_output.value // ""')
 
           # Now, write these shell variables to GITHUB_OUTPUT.
@@ -241,5 +241,6 @@ jobs:
         run: | 
           echo "🔍 Triggering Databricks job..."
           echo "DATABRICKS_HOST: $DATABRICKS_HOST"
+          echo "DATABRICKS_HOST_NO_SED: $DATABRICKS_HOST_NO_SED"
           echo "DATABRICKS_JOB_ID: ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
           databricks jobs run-now --job-id ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_IB }}
