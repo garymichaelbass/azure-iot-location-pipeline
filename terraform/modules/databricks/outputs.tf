@@ -15,6 +15,6 @@ output "databricks_notebook_path" {
   value       = databricks_notebook.iot_notebook.path
 }
 
-output "databricks_workspace_url_output" {
+output "databricks_workspace_url_value" {
   value = var.databricks_workspace_url
 }

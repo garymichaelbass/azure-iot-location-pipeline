@@ -97,8 +97,8 @@ jobs:
           echo "IOT_HUB_NAME=$IOT_HUB_NAME_VALUE" >> "$GITHUB_OUTPUT"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME_VALUE" >> "$GITHUB_OUTPUT"
 
-          echo "databricks_job_id=$DATABRICKS_JOB_ID_VALUE" >> "$GITHUB_OUTPUT"
-          echo "databricks_workspace_host=$DATABRICKS_WORKSPACE_HOST_VALUE" >> "$GITHUB_OUTPUT"
+          echo "DATABRICKS_JOB_ID=$DATABRICKS_JOB_ID_VALUE" >> "$GITHUB_OUTPUT"
+          echo "DATABRICKS_WORKSPACE_HOST=$DATABRICKS_WORKSPACE_HOST_VALUE" >> "$GITHUB_OUTPUT"
 
           # Debugging: Print the TEMPORARY SHELL VARIABLES to confirm they hold values
           echo "--- Debug Two: Values of shell variables set in this step ---"
@@ -231,10 +231,11 @@ jobs:
 
       - name: Trigger Databricks Job
         env:
-          DATABRICKS_HOST: https://${{ steps.terraform_outputs.outputs.databricks_workspace_url_output }}
+          # DATABRICKS_HOST: https://${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_URL_OUTPUT }}
+          DATABRICKS_HOST: ${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }}
         run: | 
           echo "🔍 Triggering Databricks job..."
           echo "DATABRICKS_HOST: $DATABRICKS_HOST"
-          echo "DATABRICKS_JOB_ID: ${{ steps.terraform_outputs.outputs.databricks_job_id }}"
-          databricks jobs run-now --job-id ${{ steps.terraform_outputs.outputs.databricks_job_id }}
+          echo "DATABRICKS_JOB_ID: ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
+          databricks jobs run-now --job-id ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_IB }}
