@@ -1,6 +1,6 @@
 # azure-iot-location-monitoring\.github\workflows\GithubActionsFullDeploy.yml
 
-name: Full IoT Solution Deployment
+name: Full IoT Solution Deploymentt
 
 on:
   workflow_dispatch:  # Manual trigger from GitHub UI
