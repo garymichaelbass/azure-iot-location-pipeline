@@ -304,3 +304,10 @@ jobs:
           kubectl get pods -l app=iot-simulator --kubeconfig "$KUBECONFIG_PATH"
           kubectl get deployments iot-simulator --kubeconfig "$KUBECONFIG_PATH"
           # kubectl get services iot-simulator --kubeconfig "$KUBECONFIG_PATH" # Uncomment if you have this
+
+      - name: Trigger Databricks Job
+        env:
+          DATABRICKS_HOST: https://${{ steps.tf_outputs.outputs.databricks_workspace_url_output }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }}
+        run: databricks jobs run-now --job-id ${{ steps.tf_outputs.outputs.databricks_job_id }}
+        
