@@ -1,6 +1,6 @@
 # azure-iot-location-monitoring\.github\workflows\GithubActionsFullDeploy.yml
 
-name: Full IoT Solution Deploymentt
+name: Full IoT Solution Deployment
 
 on:
   workflow_dispatch:  # Manual trigger from GitHub UI
@@ -239,4 +239,4 @@ jobs:
           echo "DATABRICKS_HOST: $DATABRICKS_HOST"
           echo "DATABRICKS_JOB_ID: ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
           echo "DATABRICKS_JOB_ID: $DATABRICKS_JOB_ID"
-          databricks jobs run-now --job-id ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
+          databricks jobs run-now ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
