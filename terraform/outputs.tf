@@ -71,3 +71,17 @@ output "notebook_full_path" {
 output "databricks_job_id" {
   value = module.databricks_iot.databricks_job_id
 }
+
+output "eventhub_connection_string_within_root_output" {
+  value = azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string
+}
+
+# azure-iot-location-monitoring\terraform\outputs.tf
+
+# ... (existing outputs) ...
+
+output "eventhub_connection_string_from_module_to_root" {
+  description = "The Event Hub connection string used by the Databricks pipeline (sensitive)."
+  value       = module.databricks_iot.eventhub_connection_string_module_output # Reference the output from your module
+  sensitive   = true # VERY IMPORTANT for security
+}
