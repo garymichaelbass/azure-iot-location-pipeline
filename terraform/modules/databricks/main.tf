@@ -37,7 +37,9 @@ resource "databricks_cluster" "iot_cluster" {
 
   library {
     maven {
-      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.18"
+      # Use the commonly available 2.3.23 for Scala 2.12
+      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22"
+      repo        = "https://repo1.maven.org/maven2"
     }
   }
 
@@ -47,7 +49,18 @@ resource "databricks_cluster" "iot_cluster" {
   # --- Also add the Cosmos DB connector here if you haven't already ---
   library {
     maven {
-      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-2_2.12:4.32.0"
+      # Try a slightly older but known good version if 4.32.0 is problematic for Spark 3.2
+      # Or, verify that Spark 3.2 is truly available with 4.32.0.
+      # If your latest_lts is 16.4, it's Spark 3.5.
+      # For Spark 3.5.x, you might need a `_3-5_2-12` artifact or a more generic `spark_3-2_2-12`
+      # that is forward compatible.
+      # Let's try the common Spark 3.1 version first as it's often more broadly compatible.
+      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-2_2.12:4.11.2"
+      repo        = "https://repo1.maven.org/maven2"
+      # If 4.20.0 doesn't work, try other common versions or check the exact Spark version of `latest_lts`
+      # databricks_spark_version.latest_lts.id typically looks like "16.4.x-scala2.12" (Spark 3.5.x)
+      # For Spark 3.5, `azure-cosmos-spark_3-2_2-12` might not be correct or compatible.
+      # You might need to use `azure-cosmos-spark_3-1_2-12` which is often the most stable branch.
     }
   }
   # --- END Cosmos DB CONNECTOR ---
