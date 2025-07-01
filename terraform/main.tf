@@ -72,11 +72,10 @@ resource "null_resource" "register_iot_simulator_device" {
 
 # Create an Event Hub instance to buffer and transport device telemetry messages.
 resource "azurerm_eventhub" "iot_eventhub" {
-  name                = "ioteventhub"
-  resource_group_name = azurerm_resource_group.iot_resource_group.name
-  namespace_name      = azurerm_eventhub_namespace.iot_eventhub_namespace.name
-  partition_count     = 2
-  message_retention   = 1
+  name              = "ioteventhub"
+  namespace_id      = azurerm_eventhub_namespace.iot_eventhub_namespace.id
+  partition_count   = 2
+  message_retention = 1
 }
 
 # Create rule to grant Send and Listen access to the Event Hub
