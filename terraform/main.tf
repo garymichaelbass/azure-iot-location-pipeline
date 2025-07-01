@@ -138,7 +138,7 @@ resource "azurerm_cosmosdb_sql_container" "iot_cosmosdb_sql_container" {
   resource_group_name = azurerm_resource_group.iot_resource_group.name
   account_name        = azurerm_cosmosdb_account.iot_cosmosdb_account.name
   database_name       = azurerm_cosmosdb_sql_database.iot_cosmosdb_database.name
-  partition_key_paths  = "/deviceId"
+  partition_key_paths  = ["/deviceId"]
 
   indexing_policy {
     indexing_mode = "consistent"
