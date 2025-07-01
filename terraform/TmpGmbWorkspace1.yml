@@ -1,46 +1,21 @@
-# azure-iot-location-monitoring\terraform\modules\databricks\main.tf
+# azure-iot-location-monitoring\terraform\modules\databricks\notebook.py
 
-# Fetches the smallest available Databricks node type with local disk support
-data "databricks_node_type" "smallest" {
-  local_disk = true
-}
+# ... (rest of your notebook.py) ...
 
-# Retrieves the latest long-term support (LTS) Spark version available on Databricks
-data "databricks_spark_version" "latest_lts" {
-  long_term_support = true
-}
+# Read streaming data from Azure Event Hubs.
+try:
+    spark
+except NameError:
+    from pyspark.sql import SparkSession
+    spark = SparkSession.builder.getOrCreate()
 
-# Provisions a Databricks cluster using the LTS Spark version and smallest node type
-resource "databricks_cluster" "iot_cluster" {
-  cluster_name            = "iot-location-cluster"
-  spark_version           = data.databricks_spark_version.latest_lts.id # This resolves to '15.4.x-scala2.12'
-  node_type_id            = "Standard_DS3_v2" # Or whatever you are currently using
-  autotermination_minutes = 30
-  num_workers             = 1
+    print("🚀 Spark session ready. Reading from Event Hub...")
+    
+raw_df = spark.readStream \
+    .format("org.apache.spark.sql.eventhubs.EventHubsSourceProvider") \ # <-- CHANGE THIS LINE
+    .options(**ehConf) \
+    .load()
 
-  # --- UPDATED EVENT HUBS CONNECTOR COORDINATE ---
-  library {
-    maven {
-      # For Spark 3.5.0, Scala 2.12. Version 2.3.23 is correct for this.
-      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.23"
-    }
-  }
+print("✅ Successfully connected to Event Hub.")
 
-  # --- UPDATED COSMOS DB CONNECTOR COORDINATE ---
-  library {
-    maven {
-      # For Spark 3.5.0, Scala 2.12.
-      # The `azure-cosmos-spark_3-1_2-12` (for Spark 3.1) is often forward-compatible with Spark 3.5.
-      # Version 4.19.1 is a good, stable choice.
-      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-1_2-12:4.19.1"
-      # IMPORTANT: If 4.19.1 for spark_3-1 still throws ClassNotFoundException:
-      # You might need to check if a specific `azure-cosmos-spark_3-5_2-12` exists.
-      # As of current knowledge, `_3-1` is usually the most recent compatible for Spark 3.x.
-      # If still failing, try a very slightly older patch like 4.16.0 or consult
-      # https://docs.microsoft.com/en-us/azure/cosmos-db/nosql/connect-spark-connector for definitive guidance.
-    }
-  }
-  # --- END Cosmos DB CONNECTOR ---
-
-  # ... (rest of your cluster config) ...
-}
+# ... (rest of your notebook.py) ...

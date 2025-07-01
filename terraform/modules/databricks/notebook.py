@@ -79,6 +79,7 @@ except NameError:
     print("🚀 Spark session ready. Reading from Event Hub...")
 
     #.format("eventhubs") \
+    #.format("org.apache.spark.sql.eventhubs.EventHubsSourceProvider") \
 raw_df = spark.readStream \
     .format("org.apache.spark.sql.eventhubs.EventHubsSourceProvider") \
     .options(**ehConf) \

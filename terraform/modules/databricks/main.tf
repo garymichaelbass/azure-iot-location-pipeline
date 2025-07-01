@@ -14,7 +14,8 @@ data "databricks_spark_version" "latest_lts" {
 resource "databricks_cluster" "iot_cluster" {
   cluster_name            = "iot-location-cluster"
   # spark_version           = "10.4.x-scala2.12"
-    spark_version           = data.databricks_spark_version.latest_lts.id # This resolves to '15.4.x-scala2.12'
+  # spark_version           = data.databricks_spark_version.latest_lts.id # This resolves to '15.4.x-scala2.12'
+  spark_version = "11.3.x-scala2.12"
   # node_type_id            = data.databricks_node_type.smallest.id
   # Available node types (Databricks-compatible in East US 2):
   # ✅ Databricks-compatible node types for East US 2:
