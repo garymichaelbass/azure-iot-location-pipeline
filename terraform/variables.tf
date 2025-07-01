@@ -45,19 +45,19 @@ variable "iot_device_name" {
 variable "cosmos_db_account" {
   description = "Cosmos database account name"
   type        = string
-  default     = "iot-cosmos-account"
+  default     = "iot-cosmos-account-gmb"
 }
 
 variable "cosmos_db_name" {
   description = "Cosmos database name"
   type        = string
-  default     = "iot-cosmos-database"
+  default     = "iot-cosmos-database-gmb"
 }
 
 variable "cosmos_db_sql_container_name" {
   description = "Within the Cosmos database, the name for the Azure Cosmos DB SQL container (collection)."
   type        = string
-  default     = "iot-cosmos-sql-container" # Provide a default that matches your notebook
+  default     = "iot-cosmos-sql-container-gmb" # Provide a default that matches your notebook
 }
 
 variable "prefix" {
