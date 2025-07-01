@@ -57,7 +57,11 @@ resource "databricks_job" "iot_job" {
       notebook_path = databricks_notebook.iot_notebook.path
       base_parameters = {
         device_count = "100"
+        eventhub_connection_string = var.eventhub_connection_string
+        cosmos_db_endpoint         = var.cosmos_db_endpoint # Also ensure these are passed
+        cosmos_db_key              = var.cosmos_db_key      # (with security considerations)
       }
     }
   }
 }
+

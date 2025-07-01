@@ -1,20 +1,32 @@
-- name: Trigger Databricks Job
-        env:
-          # DATABRICKS_HOST should be the URL *without* https:// for the CLI
-          # Your 'databricks_workspace_url_output' already provides this correctly from previous steps
-          DATABRICKS_HOST: ${{ steps.terraform_outputs.outputs.databricks_workspace_url_output }}
+resource "databricks_job" "iot_job" {
+  name = "iot-simulator-job"
+  
+  notebook_task {
+    notebook_path = var.notebook_path
+    base_parameters = {
+      eventhub_connection_string = var.eventhub_connection_string
+    }
+  }
 
-          # Unset DATABRICKS_TOKEN to avoid conflict with Azure AD authentication.
-          # The Databricks CLI will pick up ARM_CLIENT_ID/SECRET/TENANT_ID from the environment.
-          DATABRICKS_TOKEN: '' # Set to an empty string to effectively unset it for this step
+  existing_cluster_id = databricks_cluster.iot_cluster.id
+}
 
-          # Ensure Azure AD env vars are passed if not already global to the job
-          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }} # Inherit from job-level env if defined, or explicitly from secrets
-          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
-        run: |
-          echo "🔍 Triggering Databricks job..."
-          echo "DATABRICKS_HOST (from GHA output): $DATABRICKS_HOST"
-          echo "DATABRICKS_JOB_ID (from GHA output): ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
-          # Use the new CLI command syntax (job ID as positional argument)
-          databricks jobs run-now ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
+# Create a Databricks job that executes the uploaded notebook on the specified cluster
+resource "databricks_job" "iot_job" {
+  name = "iot-simulator-job"
+
+  task {
+    task_key = "simulate-iot"
+    existing_cluster_id = databricks_cluster.iot_cluster.id
+
+    notebook_task {
+      notebook_path = databricks_notebook.iot_notebook.path
+      base_parameters = {
+        device_count               = "100"
+        # --- ADD THIS LINE ---
+        eventhub_connection_string = var.eventhub_connection_string
+        # --- END ADDITION ---
+      }
+    }
+  }
+}
