@@ -42,13 +42,13 @@ variable "iot_device_name" {
   default     = "truck-001"
 }
 
-variable "cosmos_db_account" {
+variable "cosmos_db_account_name" {
   description = "Cosmos database account name"
   type        = string
   default     = "iot-cosmos-account-gmb"
 }
 
-variable "cosmos_db_name" {
+variable "cosmos_db_database_name" {
   description = "Cosmos database name"
   type        = string
   default     = "iot-cosmos-database-gmb"
