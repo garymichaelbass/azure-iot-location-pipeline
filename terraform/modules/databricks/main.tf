@@ -34,6 +34,31 @@ resource "databricks_cluster" "iot_cluster" {
   node_type_id            = "Standard_DS3_v2"
   autotermination_minutes = 30
   num_workers             = 1
+
+  library {
+    maven {
+      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.18"
+    }
+  }
+
+  # GMB: Make sure the Scala version in the artifact (_2.12) matches the one used in Databricks
+  # runtime (which the cluster inherits from data.databricks_spark_version.latest_lts.id).
+
+  # --- Also add the Cosmos DB connector here if you haven't already ---
+  library {
+    maven {
+      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-2_2.12:4.32.0"
+    }
+  }
+  # --- END Cosmos DB CONNECTOR ---
+
+  # (Optional: Add any spark_conf here if you pass sensitive keys via spark.conf.get)
+  # spark_conf = {
+  #   "spark.databricks.io.eventhubs.connectionString" = var.eventhub_connection_string
+  #   "spark.databricks.io.cosmos_db_endpoint"         = var.cosmos_db_endpoint
+  #   "spark.databricks.io.cosmos_db_key"              = var.cosmos_db_key
+  # }
+
 }
 
 # Upload a Python notebook (notebook.py) to read from Event Hub and write to Cosmos DB.
@@ -56,10 +81,14 @@ resource "databricks_job" "iot_job" {
     notebook_task {
       notebook_path = databricks_notebook.iot_notebook.path
       base_parameters = {
-        device_count = "100"
+        device_count              = "100"
         eventhub_connection_string = var.eventhub_connection_string
-        cosmos_db_endpoint         = var.cosmos_db_endpoint # Also ensure these are passed
-        cosmos_db_key              = var.cosmos_db_key      # (with security considerations)
+
+        cosmos_db_endpoint        = var.cosmos_db_endpoint
+        cosmos_db_key             = var.cosmos_db_key
+        cosmos_db_database        = var.cosmos_db_database
+        cosmos_db_container       = var.cosmos_db_container
+
       }
     }
   }

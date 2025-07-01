@@ -21,3 +21,13 @@ variable "databricks_workspace_url" {
   type        = string
   description = "URL of the Azure Databricks workspace"
 }
+
+variable "cosmos_db_database" {
+  description = "Name of the Cosmos DB SQL database"
+  type        = string
+}
+
+variable "cosmos_db_container" {
+  description = "Name of the Cosmos DB container"
+  type        = string
+}

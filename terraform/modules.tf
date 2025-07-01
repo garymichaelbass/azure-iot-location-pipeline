@@ -18,6 +18,8 @@ module "databricks_iot" {
 
   cosmos_db_endpoint         = azurerm_cosmosdb_account.iot_cosmosdb_account.endpoint
   cosmos_db_key              = azurerm_cosmosdb_account.iot_cosmosdb_account.primary_key
+  cosmos_db_database         = var.cosmos_db_database
+  cosmos_db_container        = var.cosmos_db_container
   eventhub_connection_string = azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string
   databricks_workspace_url   = azurerm_databricks_workspace.iot_databricks_workspace.workspace_url
 
@@ -27,6 +29,8 @@ module "databricks_iot" {
 
   depends_on = [
     azurerm_databricks_workspace.iot_databricks_workspace,
-    azurerm_cosmosdb_account.iot_cosmosdb_account
+    azurerm_cosmosdb_account.iot_cosmosdb_account,
+    azurerm_cosmosdb_sql_database.iot_cosmosdb_database, # Add dependency on database
+    azurerm_cosmosdb_sql_container.iot_cosmosdb_sql_container # Add dependency on container
   ]
 }
