@@ -60,14 +60,6 @@ variable "cosmos_db_sql_container_name" {
   default     = "iot-cosmos-sql-container" # Provide a default that matches your notebook
 }
 
-variable "cosmos_db_key" {
-  description = "Primary key for Cosmos DB account (used for authentication)."
-  type        = string
-  sensitive   = true # CRITICAL: Mark as sensitive!
-  # No default here, as it will be derived from a resource.
-  # This variable's value will be passed from the main.tf to the databricks module.
-}
-
 variable "prefix" {
   description = "Prefix for naming AKS and related resources"
   type        = string
