@@ -16,14 +16,17 @@ module "monitoring" {
 module "databricks_iot" {
   source = "./modules/databricks"
 
-  cosmos_db_endpoint = azurerm_cosmosdb_account.iot_cosmosdb_account.endpoint
-  cosmos_db_key      = azurerm_cosmosdb_account.iot_cosmosdb_account.primary_key
+  cosmos_db_endpoint         = azurerm_cosmosdb_account.iot_cosmosdb_account.endpoint
+  cosmos_db_key              = azurerm_cosmosdb_account.iot_cosmosdb_account.primary_key
   eventhub_connection_string = azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string
-  databricks_workspace_url = azurerm_databricks_workspace.iot_databricks_workspace.workspace_url
- 
+  databricks_workspace_url   = azurerm_databricks_workspace.iot_databricks_workspace.workspace_url
+
   providers = {
     databricks = databricks.workspace
   }
 
-  depends_on = [azurerm_databricks_workspace.iot_databricks_workspace]
+  depends_on = [
+    azurerm_databricks_workspace.iot_databricks_workspace,
+    azurerm_cosmosdb_account.iot_cosmosdb_account
+  ]
 }

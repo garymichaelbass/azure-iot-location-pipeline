@@ -105,7 +105,7 @@ resource "azurerm_databricks_workspace" "iot_databricks_workspace" {
 
 # Create a globally distributed Azure Cosmos DB account.
 resource "azurerm_cosmosdb_account" "iot_cosmosdb_account" {
-  name                = var.cosmos_db_name
+  name                = var.cosmos_db_account
   location            = var.location
   resource_group_name = azurerm_resource_group.iot_resource_group.name
   offer_type          = "Standard"
@@ -124,6 +124,24 @@ resource "azurerm_cosmosdb_account" "iot_cosmosdb_account" {
     environment = var.environment
     project     = var.project
     owner       = var.owner
+  }
+}
+
+resource "azurerm_cosmosdb_sql_database" "iot_cosmosdb_database" {
+  name                = var.cosmos_db_name
+  resource_group_name = azurerm_resource_group.iot_resource_group.name
+  account_name        = azurerm_cosmosdb_account.iot_cosmosdb_account.name
+}
+
+resource "azurerm_cosmosdb_sql_container" "iot_cosmosdb_sql_container" {
+  name                = var.cosmos_db_sql_container_name
+  resource_group_name = azurerm_resource_group.iot_resource_group.name
+  account_name        = azurerm_cosmosdb_account.iot_cosmosdb_account.name
+  database_name       = azurerm_cosmosdb_sql_database.iot_cosmosdb_database.name
+  partition_key_paths  = "/deviceId"
+
+  indexing_policy {
+    indexing_mode = "consistent"
   }
 }
 
