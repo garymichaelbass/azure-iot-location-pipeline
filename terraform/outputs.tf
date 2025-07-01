@@ -22,10 +22,6 @@ output "cosmos_db_endpoint" {
   value = azurerm_cosmosdb_account.iot_cosmosdb_account.endpoint
 }
 
-output "cosmos_db_primary_key" {
-  value = azurerm_cosmosdb_account.iot_cosmosdb_account.primary_key
-}
-
 output "eventhub_namespace" {
   value = azurerm_eventhub_namespace.iot_eventhub_namespace.name
 }
