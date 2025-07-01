@@ -81,7 +81,7 @@ except NameError:
     #.format("eventhubs") \
     #.format("org.apache.spark.sql.eventhubs.EventHubsSourceProvider") \
 raw_df = spark.readStream \
-    .format("org.apache.spark.sql.eventhubs.EventHubsSourceProvider") \
+    .format("eventhubs") \
     .options(**ehConf) \
     .load()
 
