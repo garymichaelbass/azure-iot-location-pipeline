@@ -42,26 +42,26 @@ variable "iot_device_name" {
   default     = "truck-001"
 }
 
-variable "cosmos_db_name" {
-  description = "Cosmos DB account name"
-  type        = string
-  default     = "iotcosmosdbone"
-}
+# variable "cosmos_db_name" {
+#   description = "Cosmos DB account name"
+#   type        = string
+#   default     = "iotcosmosdbone"
+# }
 
-variable "cosmos_db_endpoint" {
-  description = "Endpoint URI for the Cosmos DB account used for telemetry writes."
-  type        = string
-  # No default here, as it will be derived from a resource.
-  # This variable's value will be passed from the main.tf to the databricks module.
-}
+# variable "cosmos_db_endpoint" {
+#   description = "Endpoint URI for the Cosmos DB account used for telemetry writes."
+#   type        = string
+#   # No default here, as it will be derived from a resource.
+#   # This variable's value will be passed from the main.tf to the databricks module.
+# }
 
-variable "cosmos_db_key" {
-  description = "Primary key for Cosmos DB account (used for authentication)."
-  type        = string
-  sensitive   = true # CRITICAL: Mark as sensitive!
-  # No default here, as it will be derived from a resource.
-  # This variable's value will be passed from the main.tf to the databricks module.
-}
+# variable "cosmos_db_key" {
+#   description = "Primary key for Cosmos DB account (used for authentication)."
+#   type        = string
+#   sensitive   = true # CRITICAL: Mark as sensitive!
+#   # No default here, as it will be derived from a resource.
+#   # This variable's value will be passed from the main.tf to the databricks module.
+# }
 
 variable "prefix" {
   description = "Prefix for naming AKS and related resources"
