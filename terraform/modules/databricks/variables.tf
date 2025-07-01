@@ -21,10 +21,3 @@ variable "databricks_workspace_url" {
   type        = string
   description = "URL of the Azure Databricks workspace"
 }
-
-# Variable used by Databricks to access EventHub
-variable "eventhub_connection_string" {
-  description = "Primary connection string for the Event Hub-compatible endpoint"
-  type        = string
-  sensitive   = true # Mark as sensitive to prevent it from being easily displayed in logs/outputs
-}
