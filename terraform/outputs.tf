@@ -74,6 +74,7 @@ output "databricks_job_id" {
 
 output "eventhub_connection_string_within_root_output" {
   value = azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string
+  sensitive   = true # VERY IMPORTANT for security
 }
 
 # azure-iot-location-monitoring\terraform\outputs.tf
