@@ -13,7 +13,8 @@ data "databricks_spark_version" "latest_lts" {
 # Provisions a Databricks cluster using the LTS Spark version and smallest node type
 resource "databricks_cluster" "iot_cluster" {
   cluster_name            = "iot-location-cluster"
-  spark_version           = "10.4.x-scala2.12"
+  # spark_version           = "10.4.x-scala2.12"
+    spark_version           = data.databricks_spark_version.latest_lts.id # This resolves to '15.4.x-scala2.12'
   # node_type_id            = data.databricks_node_type.smallest.id
   # Available node types (Databricks-compatible in East US 2):
   # ✅ Databricks-compatible node types for East US 2:
@@ -37,8 +38,8 @@ resource "databricks_cluster" "iot_cluster" {
 
   library {
     maven {
-      # Use the commonly available 2.3.23 for Scala 2.12
-      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22"
+      # For Spark 3.5.0, Scala 2.12. Version 2.3.23 is correct for this.
+      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.23"
     }
   }
 
@@ -48,17 +49,15 @@ resource "databricks_cluster" "iot_cluster" {
   # --- Also add the Cosmos DB connector here if you haven't already ---
   library {
     maven {
-      # Try a slightly older but known good version if 4.32.0 is problematic for Spark 3.2
-      # Or, verify that Spark 3.2 is truly available with 4.32.0.
-      # If your latest_lts is 16.4, it's Spark 3.5.
-      # For Spark 3.5.x, you might need a `_3-5_2-12` artifact or a more generic `spark_3-2_2-12`
-      # that is forward compatible.
-      # Let's try the common Spark 3.1 version first as it's often more broadly compatible.
-      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-2_2.12:4.11.2"
-      # If 4.20.0 doesn't work, try other common versions or check the exact Spark version of `latest_lts`
-      # databricks_spark_version.latest_lts.id typically looks like "16.4.x-scala2.12" (Spark 3.5.x)
-      # For Spark 3.5, `azure-cosmos-spark_3-2_2-12` might not be correct or compatible.
-      # You might need to use `azure-cosmos-spark_3-1_2-12` which is often the most stable branch.
+      # For Spark 3.5.0, Scala 2.12.
+      # The `azure-cosmos-spark_3-1_2-12` (for Spark 3.1) is often forward-compatible with Spark 3.5.
+      # Version 4.19.1 is a good, stable choice.
+      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-1_2-12:4.19.1"
+      # IMPORTANT: If 4.19.1 for spark_3-1 still throws ClassNotFoundException:
+      # You might need to check if a specific `azure-cosmos-spark_3-5_2-12` exists.
+      # As of current knowledge, `_3-1` is usually the most recent compatible for Spark 3.x.
+      # If still failing, try a very slightly older patch like 4.16.0 or consult
+      # https://docs.microsoft.com/en-us/azure/cosmos-db/nosql/connect-spark-connector for definitive guidance.
     }
   }
   # --- END Cosmos DB CONNECTOR ---
