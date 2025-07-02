@@ -51,6 +51,7 @@ schema = StructType() \
 
 # Retrieve parameters
 eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
+eventhub_connection_string_base64 = dbutils.widgets.get("eventhub_connection_string_base64")
 cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint")
 cosmos_db_key              = dbutils.widgets.get("cosmos_db_key")
 cosmos_db_database         = dbutils.widgets.get("cosmos_db_database")
@@ -61,6 +62,11 @@ print(f"GMB_DEBUG: EH Connection String (pre-trimmed): '{eventhub_connection_str
 eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string").strip()
 # Add a print statement to verify the length and content after stripping
 print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string}' (length: {len(eventhub_connection_string)})")
+
+print(f"GMB_DEBUG: EH Connection String (pre-trimmed): '{eventhub_connection_string_base64}'")
+eventhub_connection_string_base64_strip = dbutils.widgets.get("eventhub_connection_string").strip()
+# Add a print statement to verify the length and content after stripping
+print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string_base64_strip}' (length: {len(eventhub_connection_string_base64_strip)})")
 
 ehConf = {
     # 'eventhubs.connectionString': eventhub_connection_string,
