@@ -14,8 +14,10 @@ data "databricks_spark_version" "latest_lts" {
 resource "databricks_cluster" "iot_cluster" {
   cluster_name            = "iot-location-cluster"
   # spark_version           = "10.4.x-scala2.12"
+  # spark_version = "11.3.x-scala2.12"
   # spark_version           = data.databricks_spark_version.latest_lts.id # This resolves to '15.4.x-scala2.12'
-  spark_version = "11.3.x-scala2.12"
+  spark_version           = "16.4.x-scala2.12"
+
   # node_type_id            = data.databricks_node_type.smallest.id
   # Available node types (Databricks-compatible in East US 2):
   # ✅ Databricks-compatible node types for East US 2:
@@ -42,7 +44,8 @@ resource "databricks_cluster" "iot_cluster" {
       # For Spark 3.5.0, Scala 2.12. Version 2.3.23 is correct for this.
       # FAILED 20250701_8pmcoordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.23"
       # MaybeTry coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22"
-      coordinates = "com.azure.spark:azure-spark-eventhubs_2.12:1.0.0" # A common, robust choice for Spark 3.x
+      # coordinates = "com.azure.spark:azure-spark-eventhubs_2.12:1.0.0" # A common, robust choice for Spark 3.x
+      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22"  # GMB 20250702 Refresh for Spark 16.4.x-scala2.12
     }
   }
 
@@ -55,7 +58,8 @@ resource "databricks_cluster" "iot_cluster" {
       # For Spark 3.5.0, Scala 2.12.
       # The `azure-cosmos-spark_3-1_2-12` (for Spark 3.1) is often forward-compatible with Spark 3.5.
       # Version 4.19.1 is a good, stable choice.
-      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-1_2-12:4.19.1"
+      # coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-1_2-12:4.19.1"
+      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-5_2-12:4.37.2"  # GMB 20250702 Refresh for Spark 16.4.x-scala2.12
       # IMPORTANT: If 4.19.1 for spark_3-1 still throws ClassNotFoundException:
       # You might need to check if a specific `azure-cosmos-spark_3-5_2-12` exists.
       # As of current knowledge, `_3-1` is usually the most recent compatible for Spark 3.x.
