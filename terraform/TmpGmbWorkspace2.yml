@@ -1,1 +1,8 @@
-com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22
+
+cosmos_config = {
+    "spark.cosmos.accountEndpoint": cosmos_db_endpoint,
+    "spark.cosmos.accountKey": cosmos_db_key,
+    "spark.cosmos.database": cosmos_db_database,
+    "spark.cosmos.container": cosmos_db_container,
+    "spark.cosmos.write.strategy": "ItemOverwrite"  # Optional, but recommended
+}

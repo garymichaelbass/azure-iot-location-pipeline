@@ -94,17 +94,17 @@ json_df.printSchema()
 
 # Configure the connection and write details for Azure Cosmos DB.
 cosmos_config = {
-    "Endpoint": cosmos_db_endpoint,
-    "Masterkey": cosmos_db_key,
-    "Database": cosmos_db_database,
-    "Collection": cosmos_db_container,
-    "Upsert": "true"
+    "spark.cosmos.accountEndpoint": cosmos_db_endpoint, # Corrected key
+    "spark.cosmos.accountKey": cosmos_db_key,           # Corrected key
+    "spark.cosmos.database": cosmos_db_database,         # Corrected key
+    "spark.cosmos.container": cosmos_db_container,       # Corrected key
+    "spark.cosmos.write.strategy": "ItemOverwrite"
 }
 
 print("💾 Preparing to write to Cosmos DB...")
 print("Cosmos config keys:", list(cosmos_config.keys()))
 
-logging.info(f"Cosmos DB configuration loaded for database: {cosmos_config['Database']}, collection: {cosmos_config['Collection']}")
+logging.info(f"Cosmos DB configuration loaded for database: {cosmos_config['spark.cosmos.database']}, container: {cosmos_config['spark.cosmos.container']}")
 
 # Write the processed streaming data from `json_df` to Azure Cosmos DB.
 json_df.writeStream \

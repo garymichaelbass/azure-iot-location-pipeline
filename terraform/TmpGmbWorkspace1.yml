@@ -1,32 +1,21 @@
-# azure-iot-location-monitoring\terraform\modules\databricks\main.tf
-
-# Fetches the smallest available Databricks node type with local disk support
-data "databricks_node_type" "smallest" {
-  local_disk = true
+# Configure the connection and write details for Azure Cosmos DB.
+cosmos_config = {
+    "spark.cosmos.accountEndpoint": cosmos_db_endpoint, # Corrected key
+    "spark.cosmos.accountKey": cosmos_db_key,           # Corrected key
+    "spark.cosmos.database": cosmos_db_database,         # Corrected key
+    "spark.cosmos.container": cosmos_db_container,       # Corrected key
+    "spark.cosmos.upsert": "true"                        # Corrected key
+    # You can also add "spark.cosmos.write.strategy": "ItemOverwrite" for upsert
 }
 
-# Retrieves the latest long-term support (LTS) Spark version available on Databricks
-data "databricks_spark_version" "latest_lts" {
-  long_term_support = true
-}
+print("💾 Preparing to write to Cosmos DB...")
+print("Cosmos config keys:", list(cosmos_config.keys()))
 
-# Provisions a Databricks cluster using the LTS Spark version and smallest node type
-resource "databricks_cluster" "iot_cluster" {
-  cluster_name            = "iot-location-cluster"
-  spark_version           = "16.4.x-scala2.12"
-  node_type_id            = "Standard_DS3_v2"
-  autotermination_minutes = 30
-  num_workers             = 1
+logging.info(f"Cosmos DB configuration loaded for database: {cosmos_config['spark.cosmos.database']}, container: {cosmos_config['spark.cosmos.container']}")
 
-  library {
-    maven {
-      coordinates = "com.azure.spark:azure-spark-eventhubs_2.12:1.0.0" # A common, robust choice for Spark 3.x
-    }
-  }
-
-  library {
-    maven {
-      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-1_2-12:4.19.1"
-  }
-
-}
+# Write the processed streaming data from `json_df` to Azure Cosmos DB.
+json_df.writeStream \
+    .format("cosmos.oltp") \
+    .options(**cosmos_config) \
+    .outputMode("append") \
+    .start()
