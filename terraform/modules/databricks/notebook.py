@@ -62,9 +62,40 @@ cosmos_db_database         = dbutils.widgets.get("cosmos_db_database")
 cosmos_db_container        = dbutils.widgets.get("cosmos_db_container")
 # --- END RETRIEVE PARAMETERS ---
 
+# # --- RETRIEVE PARAMETERS DIRECTLY HERE ---
+# eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string").strip() # ADD .strip() here
+# cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint").strip() # Good practice to strip all widgets
+# cosmos_db_key              = dbutils.widgets.get("cosmos_db_key").strip()
+# cosmos_db_database         = dbutils.widgets.get("cosmos_db_database").strip()
+# cosmos_db_container        = dbutils.widgets.get("cosmos_db_container").strip()
+# # --- END RETRIEVE PARAMETERS ---
+
+# ehConf = {
+#     'eventhubs.connectionString': eventhub_connection_string
+# }
+
+# print("📡 Event Hub configuration loaded:")
+# print(ehConf) # This will now print the stripped value
+# # Add a length check for debugging:
+# print(f"DEBUG: EH Connection String length after strip(): {len(eventhub_connection_string)}")
+
+
+
+print(f"GMB_DEBUG: EH Connection String (pre-trimmed): '{eventhub_connection_string}'")
+eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string").strip()
+# Add a print statement to verify the length and content after stripping
+print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string}' (length: {len(eventhub_connection_string)})")
+
+
+# ehConf = {
+#     'eventhubs.connectionString': eventhub_connection_string
+# }
 ehConf = {
-    'eventhubs.connectionString': eventhub_connection_string
+    'eventhubs.connectionString': eventhub_connection_string,
+    'shouldEncryptConnectionString': 'false'
 }
+
+
 
 print("📡 Event Hub configuration loaded:")
 print(ehConf)
