@@ -1,8 +1,8 @@
 # azure-iot-location-monitoring\terraform\modules\databricks\notebook.py
 
 # --- START dbutils Mock for Local Pylance/IDE Linting Only ---
-# This block ensures 'dbutils' is defined for your local linter,
-# but it won't actually run or interfere in the Databricks runtime.
+# This block ensures 'dbutils' is defined for the local linter,
+# but will not actually run or interfere in the Databricks runtime.
 try:
     # This line will fail locally if dbutils is not defined, triggering the 'except' block.
     # In Databricks, dbutils is globally available, so this line succeeds and the 'except' is skipped.
@@ -22,13 +22,8 @@ except NameError:
         @property
         def widgets(self):
             return MockWidgets()
-        # Add other dbutils mocks here if you use them (e.g., secrets, fs)
-        # @property
-        # def secrets(self):
-        #     return MockSecrets() # You'd define MockSecrets similarly
 
     dbutils = MockDbutils()
-    # print("Pylance/Local: Mocked dbutils object created.") # Optional: keep for initial debugging, then remove
 # --- END dbutils Mock ---
 
 
@@ -54,31 +49,12 @@ schema = StructType() \
     .add("longitude", DoubleType()) \
     .add("timestamp", LongType())
 
-# --- RETRIEVE PARAMETERS DIRECTLY HERE ---
+# Retrieve parameters
 eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
 cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint")
 cosmos_db_key              = dbutils.widgets.get("cosmos_db_key")
 cosmos_db_database         = dbutils.widgets.get("cosmos_db_database")
 cosmos_db_container        = dbutils.widgets.get("cosmos_db_container")
-# --- END RETRIEVE PARAMETERS ---
-
-# # --- RETRIEVE PARAMETERS DIRECTLY HERE ---
-# eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string").strip() # ADD .strip() here
-# cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint").strip() # Good practice to strip all widgets
-# cosmos_db_key              = dbutils.widgets.get("cosmos_db_key").strip()
-# cosmos_db_database         = dbutils.widgets.get("cosmos_db_database").strip()
-# cosmos_db_container        = dbutils.widgets.get("cosmos_db_container").strip()
-# # --- END RETRIEVE PARAMETERS ---
-
-# ehConf = {
-#     'eventhubs.connectionString': eventhub_connection_string
-# }
-
-# print("📡 Event Hub configuration loaded:")
-# print(ehConf) # This will now print the stripped value
-# # Add a length check for debugging:
-# print(f"DEBUG: EH Connection String length after strip(): {len(eventhub_connection_string)}")
-
 
 
 print(f"GMB_DEBUG: EH Connection String (pre-trimmed): '{eventhub_connection_string}'")
@@ -86,16 +62,11 @@ eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string").s
 # Add a print statement to verify the length and content after stripping
 print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string}' (length: {len(eventhub_connection_string)})")
 
-
-# ehConf = {
-#     'eventhubs.connectionString': eventhub_connection_string
-# }
 ehConf = {
-    'eventhubs.connectionString': eventhub_connection_string,
+    # 'eventhubs.connectionString': eventhub_connection_string,
+    'eventhubs.connectionString': eventhub_connection_string_base64,
     'shouldEncryptConnectionString': 'false'
 }
-
-
 
 print("📡 Event Hub configuration loaded:")
 print(ehConf)
@@ -109,8 +80,6 @@ except NameError:
 
     print("🚀 Spark session ready. Reading from Event Hub...")
 
-    #.format("eventhubs") \
-    #.format("org.apache.spark.sql.eventhubs.EventHubsSourceProvider") \
 raw_df = spark.readStream \
     .format("eventhubs") \
     .options(**ehConf) \

@@ -1,35 +1,11 @@
-# ... (previous code) ...
-
-# Configure the connection and write details for Azure Cosmos DB.
-cosmos_config = {
-    "spark.cosmos.accountEndpoint": cosmos_db_endpoint,
-    "spark.cosmos.accountKey": cosmos_db_key,
-    "spark.cosmos.database": cosmos_db_database,
-    "spark.cosmos.container": cosmos_db_container,
-    "spark.cosmos.write.strategy": "ItemOverwrite"
+output "eventhub_connection_string_base64" {
+  value = base64encode(module.eventhub.eventhub_connection_string)
+  sensitive = true
 }
 
-print("💾 Preparing to write to Cosmos DB...")
-print("Cosmos config keys:", list(cosmos_config.keys()))
+# Encrypted string received from Terraform (via job parameters)
+eventhub_connection_string_b64 = dbutils.widgets.get("eventhub_connection_string_base64").strip()
 
-logging.info(f"Cosmos DB configuration loaded for database: {cosmos_config['spark.cosmos.database']}, container: {cosmos_config['spark.cosmos.container']}")
-
-# Define the checkpoint location for the streaming query
-# This path must be accessible and writable by the Databricks cluster.
-# For example, use a path on DBFS or an ADLS Gen2 mount point.
-# You might want to get this from a widget or configuration as well.
-# For now, we'll hardcode an example DBFS path:
-# Ensure this path has proper permissions for the Databricks cluster/service principal.
-checkpoint_path = "/tmp/iot_streaming_checkpoints/cosmos_db" # A common temporary location on DBFS
-
-# Write the processed streaming data from `json_df` to Azure Cosmos DB.
-json_df.writeStream \
-    .format("cosmos.oltp") \
-    .options(**cosmos_config) \
-    .outputMode("append") \
-    .option("checkpointLocation", checkpoint_path) \ # Add this line
-    .start()
-
-print(f"✅ Streaming pipeline initialized with checkpoint: {checkpoint_path}. Data is flowing!")
-
-# ... (rest of your code) ...
+ehConf = {
+    "eventhubs.connectionString": eventhub_connection_string_b64
+}

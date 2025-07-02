@@ -21,6 +21,7 @@ module "databricks_iot" {
   cosmos_db_database         = var.cosmos_db_database_name
   cosmos_db_container        = var.cosmos_db_sql_container_name
   eventhub_connection_string = azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string
+  eventhub_connection_string_base64 = base64encode(azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string)
   databricks_workspace_url   = azurerm_databricks_workspace.iot_databricks_workspace.workspace_url
 
   providers = {

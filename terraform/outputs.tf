@@ -86,3 +86,14 @@ output "eventhub_connection_string_from_module_to_root" {
   value       = module.databricks_iot.eventhub_connection_string_module_output # Reference the output from your module
   sensitive   = true # VERY IMPORTANT for security
 }
+
+# output "eventhub_connection_string_base64" {
+#   value     = base64encode(module.eventhub.eventhub_connection_string)
+#   sensitive = true
+# }
+
+
+output "eventhub_connection_string_base64" {
+  value     = base64encode(azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string)
+  sensitive = true
+}

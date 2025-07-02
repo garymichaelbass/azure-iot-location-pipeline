@@ -17,6 +17,12 @@ variable "eventhub_connection_string" {
   sensitive   = true
 }
 
+variable "eventhub_connection_string_base64" {
+  description = "Base64encode of primary connection string for the Event Hub-compatible endpoint"
+  type        = string
+  sensitive   = true
+}
+
 variable "databricks_workspace_url" {
   type        = string
   description = "URL of the Azure Databricks workspace"
