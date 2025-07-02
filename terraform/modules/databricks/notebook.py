@@ -87,7 +87,7 @@ raw_df = spark.readStream \
 
 print("✅ Successfully connected to Event Hub.")
 
-# Parse the raw Event Hub message body, which is a binary string, into a structured JSON format.
+# Parse the raw Event Hub message body, which is a binary string, into a structured JSON format. 
 json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
 print("🧬 Schema after parsing:")
 json_df.printSchema()
