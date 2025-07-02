@@ -106,12 +106,23 @@ print("Cosmos config keys:", list(cosmos_config.keys()))
 
 logging.info(f"Cosmos DB configuration loaded for database: {cosmos_config['spark.cosmos.database']}, container: {cosmos_config['spark.cosmos.container']}")
 
+# Define the checkpoint location for the streaming query
+# This path must be accessible and writable by the Databricks cluster.
+# Ensure this path has proper permissions for the Databricks cluster/service principal.
+dbutils.fs.mkdirs("dbfs:/tmp/iot_streaming_checkpoints/cosmos_db")
+print("✅ Checkpoint location dbfs:/tmp/iot_streaming_checkpoints/cosmos_db created.")
+
+checkpoint_path = "dbfs:/tmp/iot_streaming_checkpoints/cosmos_db" # A common temporary location on DBFS
+
 # Write the processed streaming data from `json_df` to Azure Cosmos DB.
 json_df.writeStream \
     .format("cosmos.oltp") \
     .options(**cosmos_config) \
     .outputMode("append") \
+    .option("checkpointLocation", checkpoint_path) \
     .start()
+
+print(f"✅ Streaming pipeline initialized with checkpoint: {checkpoint_path}. Data is flowing!")
 
 print("✅ Streaming pipeline initialized. Data is flowing!")
 

@@ -1,8 +1,21 @@
 
-cosmos_config = {
-    "spark.cosmos.accountEndpoint": cosmos_db_endpoint,
-    "spark.cosmos.accountKey": cosmos_db_key,
-    "spark.cosmos.database": cosmos_db_database,
-    "spark.cosmos.container": cosmos_db_container,
-    "spark.cosmos.write.strategy": "ItemOverwrite"  # Optional, but recommended
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+json_df.writeStream \
+    .format("cosmos.oltp") \
+    .options(**cosmos_config) \
+    .outputMode("append") \
+    .option("checkpointLocation", "/dbfs/tmp/iot-checkpoints") \
+    .start()
