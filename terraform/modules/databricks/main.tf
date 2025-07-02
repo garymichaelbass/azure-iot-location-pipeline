@@ -40,7 +40,9 @@ resource "databricks_cluster" "iot_cluster" {
   library {
     maven {
       # For Spark 3.5.0, Scala 2.12. Version 2.3.23 is correct for this.
-      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.23"
+      # FAILED 20250701_8pmcoordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.23"
+      # MaybeTry coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22"
+      coordinates = "com.azure.spark:azure-spark-eventhubs_2.12:1.0.0" # A common, robust choice for Spark 3.x
     }
   }
 

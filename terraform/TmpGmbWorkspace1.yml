@@ -1,105 +1,30 @@
-# azure-iot-location-monitoring\terraform\modules\databricks\notebook.py
+# azure-iot-location-monitoring\terraform\modules\databricks\main.tf
 
-# --- START dbutils Mock for Local Pylance/IDE Linting Only ---
-# This block ensures 'dbutils' is defined for your local linter,
-# but it won't actually run or interfere in the Databricks runtime.
-try:
-    dbutils.widgets.get
-except NameError:
-    from types import SimpleNamespace
+# ... (rest of your cluster definition) ...
 
-    class MockWidgets:
-        def get(self, name):
-            print(f"Pylance/Local Linting: Using mock value for widget '{name}'.")
-            return f"__MOCKED_VALUE_FOR_{name.upper()}__"
+resource "databricks_cluster" "iot_cluster" {
+  cluster_name            = "iot-location-cluster"
+  spark_version           = data.databricks_spark_version.latest_lts.id # '15.4.x-scala2.12' (Spark 3.5.0)
+  node_type_id            = "Standard_DS3_v2"
+  autotermination_minutes = 30
+  num_workers             = 1
 
-    class MockDbutils:
-        @property
-        def widgets(self):
-            return MockWidgets()
+  # --- UPDATED EVENT HUBS CONNECTOR COORDINATE ---
+  library {
+    maven {
+      # Use this coordinate: It's specifically for Spark 3.x and often has better compatibility.
+      # Verify it on https://mvnrepository.com/artifact/com.azure.spark:azure-spark-eventhubs_2.12
+      coordinates = "com.azure.spark:azure-spark-eventhubs_2.12:1.0.0" # A common, robust choice for Spark 3.x
+    }
+  }
 
-    dbutils = MockDbutils()
-# --- END dbutils Mock ---
+  # --- Cosmos DB Connector (keep as is for now, fix one at a time) ---
+  library {
+    maven {
+      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-1_2-12:4.19.1"
+    }
+  }
+  # --- END Cosmos DB CONNECTOR ---
 
-# Databricks notebook to read from Event Hub and write to Cosmos DB
-
-from pyspark.sql.types import StructType, StringType, DoubleType, LongType
-from pyspark.sql.functions import from_json, col
-
-print("🔍 Initializing IoT telemetry pipeline...")
-
-import logging
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logging.info("Notebook started: Initializing environment and configurations.")
-
-schema = StructType() \
-    .add("deviceId", StringType()) \
-    .add("latitude", DoubleType()) \
-    .add("longitude", DoubleType()) \
-    .add("timestamp", LongType())
-
-eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
-cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint")
-cosmos_db_key              = dbutils.widgets.get("cosmos_db_key")
-cosmos_db_database         = dbutils.widgets.get("cosmos_db_database")
-cosmos_db_container        = dbutils.widgets.get("cosmos_db_container")
-
-ehConf = {
-    'eventhubs.connectionString': eventhub_connection_string
+  # ... (rest of your cluster config) ...
 }
-
-print("📡 Event Hub configuration loaded:")
-print(ehConf)
-
-try:
-    spark
-except NameError:
-    from pyspark.sql import SparkSession
-    spark = SparkSession.builder.getOrCreate()
-
-    print("🚀 Spark session ready. Reading from Event Hub...")
-
-raw_df = spark.readStream \
-    .format("eventhubs") \
-    .options(**ehConf) \
-    .load()
-
-print("✅ Successfully connected to Event Hub.")
-
-json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
-print("🧬 Schema after parsing:")
-json_df.printSchema()
-
-cosmos_config = {
-    "Endpoint": cosmos_db_endpoint,
-    "Masterkey": cosmos_db_key,
-    "Database": cosmos_db_database,
-    "Collection": cosmos_db_container,
-    "Upsert": "true"
-}
-
-print("💾 Preparing to write to Cosmos DB...")
-print("Cosmos config keys:", list(cosmos_config.keys()))
-
-logging.info(f"Cosmos DB configuration loaded for database: {cosmos_config['Database']}, collection: {cosmos_config['Collection']}")
-
-json_df.writeStream \
-    .format("cosmos.oltp") \
-    .options(**cosmos_config) \
-    .outputMode("append") \
-    .start()
-
-print("✅ Streaming pipeline initialized. Data is flowing!")
-
-from pyspark.sql.streaming import StreamingQueryListener
-
-class DebugListener(StreamingQueryListener):
-    def onQueryStarted(self, event):
-        print(f"🔄 Query started: {event.name}")
-    def onQueryProgress(self, event):
-        print(f"📈 Progress update: {event.progress.numInputRows} rows received")
-    def onQueryTerminated(self, event):
-        print(f"💥 Query terminated: {event.id}")
-
-spark.streams.addListener(DebugListener())
