@@ -76,7 +76,7 @@ print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string_
 
 # Your raw Event Hub connection string
 # raw_connection_string = eventhub_connection_string
-eventhub_connection_string_plus_entity = eventhub_connection_string.strip() + ";EntityPath=ioteventhub"
+eventhub_connection_string_plus_entity = eventhub_connection_string.strip() + ";EntityPath=iothub-events"
 
 # Encrypt using Spark's JVM bridge
 from pyspark.sql import SparkSession
