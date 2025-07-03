@@ -51,7 +51,8 @@ variable "cosmos_db_account_name" {
 variable "cosmos_db_database_name" {
   description = "Cosmos database name"
   type        = string
-  default     = "iot-cosmos-database-gmb"
+  # default     = "iot-cosmos-database-gmb"
+  default     = "iot-cosmos-db-gmb"
 }
 
 variable "cosmos_db_sql_container_name" {

@@ -52,14 +52,16 @@ resource "azurerm_iothub" "iot_hub" {
 }
 
 # Provision an IoT Simulator Device as a "null resource"
+# Creates a new "device identity" ("truck-001") in the IoT Hub's internal device registry
+# The IoT Hub requires a registered "device identity" for any device to secure connect and send data
 resource "null_resource" "register_iot_simulator_device" {
   provisioner "local-exec" {
     interpreter = ["bash", "-c"] # Add this line
     command = <<EOT
       set -e
-      az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors
-      az extension show --name azure-iot || az extension add --name azure-iot --only-show-errors --yes
-      az iot hub device-identity create \
+      az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors # Config CLI to automatically install extensions
+      az extension show --name azure-iot || az extension add --name azure-iot --only-show-errors --yes  # Ensure Azure CLI extension for azure-iot is installed
+      az iot hub device-identity create \     # Create new device identity ("truck-001") within Azure IoT Hub ("iotlocationhub")
         --device-id ${var.iot_device_name} \
         --hub-name ${azurerm_iothub.iot_hub.name} \
         --resource-group ${azurerm_resource_group.iot_resource_group.name} \

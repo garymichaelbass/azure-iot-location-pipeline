@@ -70,11 +70,26 @@ eventhub_connection_string_base64_strip = dbutils.widgets.get("eventhub_connecti
 # Add a print statement to verify the length and content after stripping
 print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string_base64_strip}' (length: {len(eventhub_connection_string_base64_strip)})")
 
-    # 'eventhubs.connectionString': eventhub_connection_string_base64,
+
+# Your raw Event Hub connection string
+raw_connection_string = eventhub_connection_string
+
+# Encrypt using Spark's JVM bridge
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.getOrCreate()
+sc = spark.sparkContext
+encrypted_connection_string = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(raw_connection_string)
+
+# Use in your Event Hubs configuration
+# GMB:Try this on 20250703....
 ehConf = {
-    "eventhubs.connectionString": eventhub_connection_string_decoded,
-    "shouldEncryptConnectionString": "false"
+    "eventhubs.connectionString": encrypted_connection_string
 }
+    # 'eventhubs.connectionString': eventhub_connection_string_base64,
+# ehConf = {
+#     "eventhubs.connectionString": eventhub_connection_string_decoded,
+#     "shouldEncryptConnectionString": "false"
+# }
 
 print("📡 Event Hub configuration loaded:")
 print(ehConf)

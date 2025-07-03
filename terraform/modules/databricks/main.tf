@@ -12,7 +12,8 @@ data "databricks_spark_version" "latest_lts" {
 
 # Provisions a Databricks cluster using the LTS Spark version and smallest node type
 resource "databricks_cluster" "iot_cluster" {
-  cluster_name            = "iot-location-cluster"
+  # cluster_name            = "iot-location-cluster"
+  cluster_name            = "iot-dbx-cluster"
   spark_version           = "16.4.x-scala2.12"
 
   # node_type_id            = data.databricks_node_type.smallest.id
