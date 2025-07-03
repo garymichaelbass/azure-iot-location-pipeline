@@ -49,6 +49,9 @@ schema = StructType() \
     .add("longitude", DoubleType()) \
     .add("timestamp", LongType())
 
+# In notebook.py:
+eventhub_instance_name = "iothub-events" # Use the IoT Hub's built-in endpoint name
+                                         # 20250703_2pm: GMB add
 # Retrieve parameters
 eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
 eventhub_connection_string_base64 = dbutils.widgets.get("eventhub_connection_string_base64").strip()
