@@ -51,7 +51,7 @@ schema = StructType() \
 
 # Retrieve parameters
 eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
-eventhub_connection_string_base64 = dbutils.widgets.get("eventhub_connection_string_base64").strip
+eventhub_connection_string_base64 = dbutils.widgets.get("eventhub_connection_string_base64").strip()
 cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint")
 cosmos_db_key              = dbutils.widgets.get("cosmos_db_key")
 cosmos_db_database         = dbutils.widgets.get("cosmos_db_database")
