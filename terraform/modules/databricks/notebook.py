@@ -64,14 +64,14 @@ eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string").s
 print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string}' (length: {len(eventhub_connection_string)})")
 
 print(f"GMB_DEBUG: EH Connection String (pre-trimmed): '{eventhub_connection_string_base64}'")
-eventhub_connection_string_base64_strip = dbutils.widgets.get("eventhub_connection_string").strip()
+eventhub_connection_string_base64_strip = dbutils.widgets.get("eventhub_connection_string_base64").strip()
 # Add a print statement to verify the length and content after stripping
 print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string_base64_strip}' (length: {len(eventhub_connection_string_base64_strip)})")
 
+
+    # 'eventhubs.connectionString': eventhub_connection_string_base64,
 ehConf = {
-    # 'eventhubs.connectionString': eventhub_connection_string,
-    'eventhubs.connectionString': eventhub_connection_string_base64,
-    'shouldEncryptConnectionString': 'false'
+    'eventhubs.connectionString': eventhub_connection_string
 }
 
 print("📡 Event Hub configuration loaded:")

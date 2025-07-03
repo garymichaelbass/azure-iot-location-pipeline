@@ -1,21 +1,22 @@
+import base64
 
+# Retrieve parameters
+eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string").strip()
+eventhub_connection_string_base64 = dbutils.widgets.get("eventhub_connection_string_base64").strip()
+cosmos_db_endpoint = dbutils.widgets.get("cosmos_db_endpoint")
+cosmos_db_key = dbutils.widgets.get("cosmos_db_key")
+cosmos_db_database = dbutils.widgets.get("cosmos_db_database")
+cosmos_db_container = dbutils.widgets.get("cosmos_db_container")
 
+# Decode the base64-encoded Event Hub connection string
+try:
+    eventhub_connection_string_decoded = base64.b64decode(eventhub_connection_string_base64).decode("utf-8")
+    print(f"GMB_DEBUG: Decoded EH Connection String (length: {len(eventhub_connection_string_decoded)})")
+except Exception as e:
+    raise ValueError("❌ Failed to decode base64 Event Hub connection string. Check that it is valid base64.") from e
 
-
-
-
-
-
-
-
-
-
-
-
-
-json_df.writeStream \
-    .format("cosmos.oltp") \
-    .options(**cosmos_config) \
-    .outputMode("append") \
-    .option("checkpointLocation", "/dbfs/tmp/iot-checkpoints") \
-    .start()
+# Use the decoded string
+ehConf = {
+    'eventhubs.connectionString': eventhub_connection_string_decoded,
+    'shouldEncryptConnectionString': 'false'
+}
