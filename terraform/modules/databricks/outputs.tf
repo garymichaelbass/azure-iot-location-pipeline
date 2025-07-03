@@ -27,6 +27,6 @@ output "eventhub_connection_string_module_output" {
 
 output "eventhub_connection_string_plus_entity_module_output" {
   description = "The Event Hub connection string (passed into this module)."
-  value       = var.eventhub_connection_string_plus_entity   # Output the variable received by the module
+  value       = eventhub_connection_string.strip() + ";EntityPath=ioteventhub"
   sensitive   = true # VERY IMPORTANT for security
 }
