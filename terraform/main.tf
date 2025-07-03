@@ -92,7 +92,7 @@ resource "azurerm_eventhub_namespace_authorization_rule" "iot_send_rule" {
 
 # Deploy a Standard-tier Azure Databricks workspace for streaming, transformation, and analytics of IoT data.
 resource "azurerm_databricks_workspace" "iot_databricks_workspace" {
-  name                = "iot-dbx-workspace"
+  name                = "iot-dbx"
   location            = var.location
   resource_group_name = azurerm_resource_group.iot_resource_group.name
   sku                 = "standard"
