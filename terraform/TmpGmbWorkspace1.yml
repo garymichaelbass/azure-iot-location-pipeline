@@ -1,82 +1,14 @@
-# azure-iot-location-monitoring\terraform\modules\databricks\notebook.py
+import base64
 
-# ... (dbutils Mock, imports, logging, schema - no changes) ...
+eventhub_connection_string_b64 = dbutils.widgets.get("eventhub_connection_string_base64").strip()
 
-import base64 # Import base64 for decoding
-import re     # Import re for parsing connection string components
-
-# --- Retrieve parameters from widgets ---
-
-# Only retrieve the Base64 encoded Event Hub connection string
-eventhub_connection_string_b64_from_widget = dbutils.widgets.get("eventhub_connection_string_base64").strip()
-
-# DEBUG: Print the Base64 string and its length after stripping from widget
-print(f"GMB_DEBUG: EH Connection String B64 (from widget, stripped): '{eventhub_connection_string_b64_from_widget}' (length: {len(eventhub_connection_string_b64_from_widget)})")
-
-# Retrieve other parameters and strip them (good practice for all widget inputs)
-cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint").strip()
-cosmos_db_key              = dbutils.widgets.get("cosmos_db_key").strip()
-cosmos_db_database         = dbutils.widgets.get("cosmos_db_database").strip()
-cosmos_db_container        = dbutils.widgets.get("cosmos_db_container").strip()
-# --- END RETRIEVE PARAMETERS ---
-
-
-# --- Decode the Event Hub connection string and parse components ---
 try:
-    # Decode the base64 string to get the original raw connection string
-    eventhub_connection_string_decoded = base64.b64decode(eventhub_connection_string_b64_from_widget).decode('utf-8')
-    print(f"GMB_DEBUG: EH Connection String (decoded): '{eventhub_connection_string_decoded}' (length: {len(eventhub_connection_string_decoded)})")
+    eventhub_connection_string = base64.b64decode(eventhub_connection_string_b64).decode("utf-8")
+    if not eventhub_connection_string.startswith("Endpoint="):
+        raise ValueError("Decoded Event Hub string doesn't appear valid.")
 except Exception as e:
-    print(f"ERROR: Failed to Base64 decode Event Hub connection string: {e}")
-    raise # Re-raise the error to fail the job if decoding fails
+    raise ValueError("❌ Failed to decode base64 Event Hub connection string.") from e
 
-# Parse the connection string components
-match = re.search(r"Endpoint=sb://([^/]+)/?;SharedAccessKeyName=([^;]+);SharedAccessKey=([^;]+)", eventhub_connection_string_decoded)
-
-if match:
-    eventhub_namespace_fqdn = match.group(1) # e.g., ioteventns.servicebus.windows.net
-    eventhub_sas_key_name = match.group(2) # e.g., iot-send-auth
-    eventhub_sas_key = match.group(3) # The actual shared access key
-    print(f"GMB_DEBUG: Parsed EH Namespace FQDN: {eventhub_namespace_fqdn}")
-    print(f"GMB_DEBUG: Parsed EH SAS Key Name: {eventhub_sas_key_name}")
-    print(f"GMB_DEBUG: Parsed EH SAS Key: {eventhub_sas_key[:5]}...{eventhub_sas_key[-5:]}") # Print partial key for security
-else:
-    print("ERROR: Could not parse Event Hub connection string components. The decoded string format might be unexpected.")
-    raise ValueError("Invalid Event Hub connection string format after Base64 decoding.")
-
-# --- IMPORTANT: You need the actual Event Hub instance name here ---
-# This is NOT part of the connection string you're passing.
-# If your IoT Hub's built-in endpoint is the source, its name is typically "iothub-events".
-# If you created a separate Event Hub instance within your namespace, use that name.
-eventhub_instance_name = "iothub-events" # <--- REPLACE WITH YOUR ACTUAL EVENT HUB INSTANCE NAME!
-
-
-# --- NEW ehConf setup using individual components ---
 ehConf = {
-    'eventhubs.namespace': eventhub_namespace_fqdn,
-    'eventhubs.name': eventhub_instance_name,
-    'eventhubs.sas.keyName': eventhub_sas_key_name,
-    'eventhubs.sas.key': eventhub_sas_key,
-    'eventhubs.maxEventsPerTrigger': '10000', # Optional: Adjust as needed
-    'eventhubs.startingPosition': '{"offset":"-1", "enqueuedTime":"-1"}' # Optional: Start from beginning
+    'eventhubs.connectionString': eventhub_connection_string
 }
-
-print("📡 Event Hub configuration loaded:")
-print(ehConf)
-
-# Read streaming data from Azure Event Hubs.
-try:
-    spark
-except NameError:
-    from pyspark.sql import SparkSession
-    spark = SparkSession.builder.getOrCreate()
-    print("🚀 Spark session ready. Reading from Event Hub...")
-
-raw_df = spark.readStream \
-    .format("eventhubs") \
-    .options(**ehConf) \
-    .load()
-
-print("✅ Successfully connected to Event Hub.")
-
-# ... (rest of notebook, no further changes needed for this issue) ...
