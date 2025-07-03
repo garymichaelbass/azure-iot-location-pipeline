@@ -1,14 +1,14 @@
-import base64
+raw_connection_string = eventhub_connection_string.strip() + ";EntityPath=ioteventhub"
 
-eventhub_connection_string_b64 = dbutils.widgets.get("eventhub_connection_string_base64").strip()
-
-try:
-    eventhub_connection_string = base64.b64decode(eventhub_connection_string_b64).decode("utf-8")
-    if not eventhub_connection_string.startswith("Endpoint="):
-        raise ValueError("Decoded Event Hub string doesn't appear valid.")
-except Exception as e:
-    raise ValueError("❌ Failed to decode base64 Event Hub connection string.") from e
+encrypted_connection_string = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(raw_connection_string)
 
 ehConf = {
-    'eventhubs.connectionString': eventhub_connection_string
+    "eventhubs.connectionString": encrypted_connection_string
 }
+
+print("🔒 Final EH connection string with EntityPath:", raw_connection_string)
+
+
+raw_connection_string += ";EntityPath=ioteventhub"
+
+

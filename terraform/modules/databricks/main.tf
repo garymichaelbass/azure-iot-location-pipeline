@@ -61,7 +61,7 @@ resource "databricks_notebook" "iot_notebook" {
 
 # Create a Databricks job that executes the uploaded notebook on the specified cluster
 resource "databricks_job" "iot_job" {
-  name = "iot-simulator-job"
+  name = "iot-dbx-job"
 
   task {
     task_key = "simulate-iot"
