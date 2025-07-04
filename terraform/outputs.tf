@@ -28,16 +28,16 @@ output "iot_hub_name" {
   value = azurerm_iothub.iot_hub.name
 }
 
-output "iot_hub_connection_string" {
+output "iot_hub_connection_string_via_iot_hub_connection_policy" {
   description = "Primary connection string for the IoT Hub"
   value       = azurerm_iothub_shared_access_policy.iot_hub_connection_policy.primary_connection_string
   sensitive   = true
 }
 
-output "iot_hub_connection_string" {
+output "iot_hub_connection_string_via_policy_for_iothubowner" {
   description = "The primary connection string for the IoT Hub's 'iothubowner' policy, providing full access."
   # Access the 'iothubowner' policy's primary_connection_string attribute.
-  # The shared_access_policy attribute is a map, so you can access by name.
+  # The shared_access_policy attribute is a map, which can be accessed by name.
   value       = azurerm_iothub.iot_hub.shared_access_policy["iothubowner"].primary_connection_string
   sensitive   = true # It's a secret, so mark it as sensitive!
 }
