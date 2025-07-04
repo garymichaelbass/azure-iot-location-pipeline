@@ -1,122 +1,71 @@
-# azure-iot-location-monitoring/terraform/modules/databricks/notebook.py
+# azure-iot-location-monitoring\terraform\modules\databricks\main.tf
 
-# --- START dbutils Mock for Local Pylance/IDE Linting Only ---
-try:
-    dbutils.widgets.get
-except NameError:
-    from types import SimpleNamespace
-
-    class MockWidgets:
-        def get(self, name):
-            print(f"Pylance/Local Linting: Using mock value for widget '{name}'.")
-            return f"__MOCKED_VALUE_FOR_{name.upper()}__"
-
-    class MockDbutils:
-        @property
-        def widgets(self):
-            return MockWidgets()
-
-    dbutils = MockDbutils()
-# --- END dbutils Mock ---
-
-from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StringType, DoubleType, LongType
-from pyspark.sql.functions import from_json, col, concat_ws
-from pyspark.sql.streaming import StreamingQueryListener
-import logging
-
-print("🔍 Initializing IoT telemetry pipeline...")
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logging.info("Notebook started: Initializing environment and configurations.")
-
-# Define schema
-schema = StructType() \
-    .add("deviceId", StringType()) \
-    .add("latitude", DoubleType()) \
-    .add("longitude", DoubleType()) \
-    .add("timestamp", LongType())
-
-# Retrieve parameters
-eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
-cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint")
-cosmos_db_key              = dbutils.widgets.get("cosmos_db_key")
-cosmos_db_database         = dbutils.widgets.get("cosmos_db_database")
-cosmos_db_container        = dbutils.widgets.get("cosmos_db_container")
-
-print("🔒 eventhub_connection_string (pre-encryption):", eventhub_connection_string)
-
-# Encrypt Event Hub connection string
-spark = SparkSession.builder.getOrCreate()
-sc = spark.sparkContext
-encrypted_connection_string = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(eventhub_connection_string)
-
-ehConf = {
-    "eventhubs.connectionString": encrypted_connection_string
+# Fetches the smallest available Databricks node type with local disk support
+data "databricks_node_type" "smallest" {
+  local_disk = true
 }
 
-print("📡 Event Hub configuration loaded:")
-print(ehConf)
-
-# Read from Event Hub
-raw_df = spark.readStream \
-    .format("eventhubs") \
-    .options(**ehConf) \
-    .load()
-
-print("✅ Successfully connected to Event Hub.")
-
-# Parse JSON and add required 'id' field
-json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
-json_df = json_df.withColumn("id", concat_ws("-", col("deviceId"), col("timestamp")))
-
-print("🧬 Schema after parsing and adding 'id':")
-json_df.printSchema()
-
-# Cosmos DB config
-cosmos_config = {
-    "spark.cosmos.accountEndpoint": cosmos_db_endpoint,
-    "spark.cosmos.accountKey": cosmos_db_key,
-    "spark.cosmos.database": cosmos_db_database,
-    "spark.cosmos.container": cosmos_db_container,
-    "spark.cosmos.write.strategy": "ItemOverwrite"
+# Fetches the latest long-term support (LTS) Spark version available on Databricks
+data "databricks_spark_version" "latest_lts" {
+  long_term_support = true
 }
 
-print("💾 Preparing to write to Cosmos DB...")
-print("Cosmos config keys:", list(cosmos_config.keys()))
-logging.info(f"Cosmos DB configuration loaded for database: {cosmos_config['spark.cosmos.database']}, container: {cosmos_config['spark.cosmos.container']}")
+# Provisions a Databricks cluster using the LTS Spark version and smallest node type
+resource "databricks_cluster" "iot_cluster" {
+  cluster_name            = "iot-dbx-cluster"
+  spark_version           = "16.4.x-scala2.12"
+  node_type_id            = "Standard_DS3_v2"
+  autotermination_minutes = 30
+  num_workers             = 1
 
-# Checkpoint path
-checkpoint_path = "dbfs:/tmp/iot_streaming_checkpoints/cosmos_db"
-dbutils.fs.mkdirs(checkpoint_path)
-print(f"✅ Checkpoint location {checkpoint_path} created.")
+  library {
+    maven {
+      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22"
+    }
+  }
 
-# Write to Cosmos DB with batch logging
-def log_batch(df, epoch_id):
-    count = df.count()
-    print(f"📦 Writing batch {epoch_id} with {count} records")
-    if count > 0:
-        df.write \
-            .format("cosmos.oltp") \
-            .options(**cosmos_config) \
-            .mode("append") \
-            .save()
+  library {
+    maven {
+      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-5_2-12:4.37.2"
+    }
+  }
+}
 
-json_df.writeStream \
-    .foreachBatch(log_batch) \
-    .option("checkpointLocation", checkpoint_path) \
-    .start()
+# Upload a Python notebook (notebook.py) to read from Event Hub and write to Cosmos DB.
+resource "databricks_notebook" "iot_notebook" {
+  path     = "/Shared/iot-location-notebook"
+  language = "PYTHON"
+  source   = "${path.module}/notebook.py"
+}
 
-print(f"✅ Streaming pipeline initialized with checkpoint: {checkpoint_path}. Data is flowing!")
+# Create a Databricks job that executes the uploaded notebook on the specified cluster
+resource "databricks_job" "iot_job" {
+  name = "iot-dbx-job"
 
-# Add listener for streaming events
-class DebugListener(StreamingQueryListener):
-    def onQueryStarted(self, event):
-        print(f"🔄 Query started: {event.name}")
-    def onQueryProgress(self, event):
-        print(f"📈 Progress update: {event.progress.numInputRows} rows received")
-    def onQueryTerminated(self, event):
-        print(f"💥 Query terminated: {event.id}")
+  task {
+    task_key            = "simulate-iot"
+    existing_cluster_id = databricks_cluster.iot_cluster.id
 
-spark.streams.addListener(DebugListener())
+    notebook_task {
+      notebook_path = databricks_notebook.iot_notebook.path
+      base_parameters = {
+        device_count                 = "100"
+        # CRITICAL CHANGE: ONLY pass the Base64 encoded IoT Hub connection string
+        # This variable's value comes from your root modules.tf
+        eventhub_connection_string_base64 = var.eventhub_connection_string_base64
+
+        # REMOVE THESE LINES FROM HERE (if present in your file),
+        # as these widgets are no longer passed from modules.tf
+        # and are not needed by the notebook in its correct form.
+        # eventhub_connection_string   = var.eventhub_connection_string
+        # eventhub_connection_string_plus_entity = var.eventhub_connection_string_plus_entity
+        # eventhub_instance_name       = var.eventhub_instance_name
+
+        cosmos_db_endpoint           = var.cosmos_db_endpoint
+        cosmos_db_key                = var.cosmos_db_key
+        cosmos_db_database           = var.cosmos_db_database
+        cosmos_db_container          = var.cosmos_db_container
+      }
+    }
+  }
+}
