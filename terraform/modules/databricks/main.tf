@@ -62,7 +62,6 @@ resource "databricks_job" "iot_job" {
       base_parameters = {
         device_count              = "100"
         eventhub_connection_string = var.eventhub_connection_string
-        eventhub_connection_string_base64 = var.eventhub_connection_string_base64
 
         cosmos_db_endpoint        = var.cosmos_db_endpoint
         cosmos_db_key             = var.cosmos_db_key
