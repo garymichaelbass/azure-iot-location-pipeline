@@ -1,120 +1,14 @@
-# --- START dbutils Mock for Local Pylance/IDE Linting Only ---
-try:
-    dbutils.widgets.get
-except NameError:
-    from types import SimpleNamespace
+raw_connection_string = eventhub_connection_string.strip() + ";EntityPath=ioteventhub"
 
-    class MockWidgets:
-        def get(self, name):
-            print(f"Pylance/Local Linting: Using mock value for widget '{name}'.")
-            return f"__MOCKED_VALUE_FOR_{name.upper()}__"
-
-    class MockDbutils:
-        @property
-        def widgets(self):
-            return MockWidgets()
-
-    dbutils = MockDbutils()
-# --- END dbutils Mock ---
-
-from pyspark.sql.types import StructType, StringType, DoubleType, LongType
-from pyspark.sql.functions import from_json, col
-import logging
-import base64
-from pyspark.sql import SparkSession
-
-print("🔍 Initializing IoT telemetry pipeline...")
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logging.info("Notebook started: Initializing environment and configurations.")
-
-# Define schema for incoming telemetry
-schema = StructType() \
-    .add("deviceId", StringType()) \
-    .add("latitude", DoubleType()) \
-    .add("longitude", DoubleType()) \
-    .add("timestamp", LongType())
-
-# Retrieve parameters from widgets
-eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string").strip()
-eventhub_connection_string_base64 = dbutils.widgets.get("eventhub_connection_string_base64").strip()
-cosmos_db_endpoint = dbutils.widgets.get("cosmos_db_endpoint")
-cosmos_db_key = dbutils.widgets.get("cosmos_db_key")
-cosmos_db_database = dbutils.widgets.get("cosmos_db_database")
-cosmos_db_container = dbutils.widgets.get("cosmos_db_container")
-
-# Debug output
-print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string}' (length: {len(eventhub_connection_string)})")
-print(f"GMB_DEBUG: EH Connection String (base64, trimmed): '{eventhub_connection_string_base64}' (length: {len(eventhub_connection_string_base64)})")
-
-# Use the raw connection string as-is (includes EntityPath)
-raw_connection_string = eventhub_connection_string
-
-# Encrypt using Spark's JVM bridge
-spark = SparkSession.builder.getOrCreate()
-sc = spark.sparkContext
 encrypted_connection_string = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(raw_connection_string)
-print("🔒 Final EH connection string (into ehConf):", raw_connection_string)
 
-# Configure Event Hub connection
 ehConf = {
     "eventhubs.connectionString": encrypted_connection_string
 }
 
-print("📡 Event Hub configuration loaded:")
-print(ehConf)
+print("🔒 Final EH connection string with EntityPath:", raw_connection_string)
 
-# Read streaming data from Event Hub
-raw_df = spark.readStream \
-    .format("eventhubs") \
-    .options(**ehConf) \
-    .load()
 
-print("✅ Successfully connected to Event Hub.")
+raw_connection_string += ";EntityPath=ioteventhub"
 
-# Parse JSON from Event Hub message body
-json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
-print("🧬 Schema after parsing:")
-json_df.printSchema()
 
-# Cosmos DB configuration
-cosmos_config = {
-    "spark.cosmos.accountEndpoint": cosmos_db_endpoint,
-    "spark.cosmos.accountKey": cosmos_db_key,
-    "spark.cosmos.database": cosmos_db_database,
-    "spark.cosmos.container": cosmos_db_container,
-    "spark.cosmos.write.strategy": "ItemOverwrite"
-}
-
-print("💾 Preparing to write to Cosmos DB...")
-print("Cosmos config keys:", list(cosmos_config.keys()))
-logging.info(f"Cosmos DB configuration loaded for database: {cosmos_config['spark.cosmos.database']}, container: {cosmos_config['spark.cosmos.container']}")
-
-# Define checkpoint location
-checkpoint_path = "dbfs:/tmp/iot_streaming_checkpoints/cosmos_db"
-dbutils.fs.mkdirs(checkpoint_path)
-print(f"✅ Checkpoint location {checkpoint_path} created.")
-
-# Write stream to Cosmos DB
-json_df.writeStream \
-    .format("cosmos.oltp") \
-    .options(**cosmos_config) \
-    .outputMode("append") \
-    .option("checkpointLocation", checkpoint_path) \
-    .start()
-
-print(f"✅ Streaming pipeline initialized with checkpoint: {checkpoint_path}. Data is flowing!")
-
-# Add streaming listener for progress logging
-from pyspark.sql.streaming import StreamingQueryListener
-
-class DebugListener(StreamingQueryListener):
-    def onQueryStarted(self, event):
-        print(f"🔄 Query started: {event.name}")
-    def onQueryProgress(self, event):
-        print(f"📈 Progress update: {event.progress.numInputRows} rows received")
-    def onQueryTerminated(self, event):
-        print(f"💥 Query terminated: {event.id}")
-
-spark.streams.addListener(DebugListener())
