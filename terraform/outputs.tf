@@ -28,39 +28,10 @@ output "iot_hub_name" {
   value = azurerm_iothub.iot_hub.name
 }
 
-output "iot_hub_connection_string_via_iot_hub_connection_policy" {
+output "iot_hub_connection_string" {
   description = "Primary connection string for the IoT Hub"
   value       = azurerm_iothub_shared_access_policy.iot_hub_connection_policy.primary_connection_string
   sensitive   = true
-}
-
-output "iot_hub_connection_string_via_policy_for_iothubowner" {
-  description = "The primary connection string for the IoT Hub's 'iothubowner' policy, providing full access."
-  # Access the 'iothubowner' policy's primary_connection_string attribute.
-  # The shared_access_policy attribute is a map, which can be accessed by name.
-  value       = azurerm_iothub.iot_hub.shared_access_policy["iothubowner"].primary_connection_string
-  sensitive   = true # It's a secret, so mark it as sensitive!
-}
-
-output "iot_hub_builtin_events_endpoint_connection_string" {
-  description = "The Event Hub-compatible connection string for IoT Hub's built-in 'events' endpoint."
-  # This provides the connection string specifically for the built-in endpoint,
-  # including the IoT Hub's hostname and EntityPath=iothub-events.
-  # It still uses the iothubowner policy's key.
-  value       = azurerm_iothub.iot_hub.properties.event_hub_endpoints.events.events_hub_compatible_endpoint_with_namespace
-  sensitive   = true # It's a secret, so mark it as sensitive!
-}
-
-output "iot_hub_builtin_events_endpoint_fqdn" {
-  description = "The FQDN for IoT Hub's built-in 'events' endpoint (e.g., yourhub.azure-devices.net)."
-  value       = azurerm_iothub.iot_hub.properties.event_hub_endpoints.events.events_hub_compatible_name
-  # Not sensitive, as it's just the hostname
-}
-
-output "iot_hub_builtin_events_entity_path" {
-  description = "The EntityPath (Event Hub name) for IoT Hub's built-in 'events' endpoint (e.g., iothub-events)."
-  value       = azurerm_iothub.iot_hub.properties.event_hub_endpoints.events.events_hub_compatible_path
-  # Not sensitive, as it's just the entity name
 }
 
 output "eventhub_namespace" {

@@ -51,6 +51,17 @@ resource "azurerm_iothub" "iot_hub" {
   }
 }
 
+resource "azurerm_iothub_shared_access_policy" "iot_hub_connection_policy" {
+  name                = "iothub-owner-policy"
+  resource_group_name = azurerm_resource_group.iot_resource_group.name
+  iothub_name         = azurerm_iothub.iot_hub.name
+
+  registry_read   = true
+  registry_write  = true
+  service_connect = true
+  device_connect  = true
+}
+
 # Provision an IoT Simulator Device as a "null resource"
 # Creates a new "device identity" ("truck-001") in the IoT Hub's internal device registry
 # The IoT Hub requires a registered "device identity" for any device to secure connect and send data
