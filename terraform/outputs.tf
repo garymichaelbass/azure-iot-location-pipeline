@@ -70,10 +70,10 @@ output "databricks_job_run_url" {
   value       = "${azurerm_databricks_workspace.iot_databricks_workspace.workspace_url}#job/${module.databricks_iot.databricks_job_id}"
 }
 
-output "databricks_notebook_full_path" {
-  description = "Uploaded path of the IoT notebook"
-  value       = module.databricks_iot.databricks_notebook_path
-}
+# output "databricks_notebook_full_path" {
+#   description = "Uploaded path of the IoT notebook"
+#   value       = module.databricks_iot.databricks_notebook_path
+# }
 
 output "cosmos_db_endpoint" {
   description = "Database endpoint"

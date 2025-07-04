@@ -11,11 +11,11 @@ variable "cosmos_db_key" {
   sensitive   = true
 }
 
-variable "eventhub_instance_name" {
-  description = "Instance name for the Event Hub instance"
-  type        = string
-  sensitive   = true
-}
+# variable "eventhub_instance_name" {
+#   description = "Instance name for the Event Hub instance"
+#   type        = string
+#   sensitive   = true
+# }
 
 variable "eventhub_connection_string" {
   description = "Primary connection string for the Event Hub-compatible endpoint"
