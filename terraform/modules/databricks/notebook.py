@@ -51,15 +51,14 @@ schema = StructType() \
 
 # Retrieve parameters
 eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
+eventhub_connection_string_plus_entity = dbutils.widgets.get("eventhub_connection_string_plus_entity")
 eventhub_instance_name     = dbutils.widgets.get("eventhub_instance_name")
 cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint")
 cosmos_db_key              = dbutils.widgets.get("cosmos_db_key")
 cosmos_db_database         = dbutils.widgets.get("cosmos_db_database")
 cosmos_db_container        = dbutils.widgets.get("cosmos_db_container")
 
-# raw_connection_string = eventhub_connection_string plus EntityPath
-eventhub_connection_string_plus_entity = eventhub_connection_string.strip() + ";EntityPath=" + eventhub_instance_name
-print("🔒 raw_connection_string (pre-encryption): ", eventhub_connection_string_plus_entity)
+print("🔒 eventhub_connection_string_plus_entity (pre-encryption): ", eventhub_connection_string_plus_entity)
 
 # Encrypt using Spark's JVM bridge
 from pyspark.sql import SparkSession
