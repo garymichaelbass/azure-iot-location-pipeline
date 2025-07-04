@@ -83,7 +83,7 @@ output "eventhub_connection_string_from_module_to_root" {
   sensitive   = true # VERY IMPORTANT for security
 }
 
-output "eventhub_connection_string_from_module_to_root" {
+output "eventhub_connection_string_plus_entity_from_module_to_root" {
   description = "The Event Hub connection string used by the Databricks pipeline (sensitive)."
   value       = module.databricks_iot.eventhub_connection_string_plus_entity_module_output # Reference the output from module
   sensitive   = true # VERY IMPORTANT for security
