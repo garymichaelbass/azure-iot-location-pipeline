@@ -83,5 +83,5 @@ output "cosmos_db_database" {
 
 output "cosmos_db_sql_container" {
   description = "Cosmos database container"
-  value = azurerm_cosmosdb_sql_container.iot_cosmosdb_accoiot_cosmosdb_sql_container.name
+  value = azurerm_cosmosdb_sql_container.iot_cosmosdb_sql_container.name
 }
