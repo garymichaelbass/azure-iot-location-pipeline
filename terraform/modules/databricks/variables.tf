@@ -23,12 +23,6 @@ variable "eventhub_connection_string" {
   sensitive   = true
 }
 
-variable "eventhub_connection_string_base64" {
-  description = "Primary connection string for the Event Hub-compatible endpoint"
-  type        = string
-  sensitive   = true
-}
-
 variable "eventhub_connection_string_plus_entity" {
   description = "Primary connection string for the Event Hub-compatible endpoint plus entity"
   type        = string
@@ -49,4 +43,3 @@ variable "cosmos_db_container" {
   description = "Name of the Cosmos DB container"
   type        = string
 }
-
