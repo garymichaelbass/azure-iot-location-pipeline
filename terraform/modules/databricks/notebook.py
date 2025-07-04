@@ -12,8 +12,7 @@ except NameError:
 
     class MockWidgets:
         def get(self, name):
-            # Provide a dummy value for local testing/linting.
-            # This is what Pylance will see.
+            # Provide a dummy value for local testing/linting. This is what Pylance will see.
             # In a real Databricks job run, this code path is not taken.
             print(f"Pylance/Local Linting: Using mock value for widget '{name}'.")
             return f"__MOCKED_VALUE_FOR_{name.upper()}__"
@@ -31,6 +30,7 @@ except NameError:
 
 # Import necessary types for defining the schema of the incoming data
 from pyspark.sql.types import StructType, StringType, DoubleType, LongType
+
 # Import functions for data transformation, specifically for parsing JSON
 from pyspark.sql.functions import from_json, col
 
@@ -49,52 +49,28 @@ schema = StructType() \
     .add("longitude", DoubleType()) \
     .add("timestamp", LongType())
 
-# In notebook.py:
-eventhub_instance_name = "iothub-events" # Use the IoT Hub's built-in endpoint name
-                                         # 20250703_2pm: GMB add
 # Retrieve parameters
 eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
-eventhub_connection_string_base64 = dbutils.widgets.get("eventhub_connection_string_base64").strip()
+eventhub_instance_name     = dbutils.widgets.get("eventhub_instance_name")
 cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint")
 cosmos_db_key              = dbutils.widgets.get("cosmos_db_key")
 cosmos_db_database         = dbutils.widgets.get("cosmos_db_database")
 cosmos_db_container        = dbutils.widgets.get("cosmos_db_container")
 
-import base64
-eventhub_connection_string_decoded = base64.b64decode(eventhub_connection_string_base64).decode("utf-8")
-
-print(f"GMB_DEBUG: EH Connection String (pre-trimmed): '{eventhub_connection_string}'")
-eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string").strip()
-# Add a print statement to verify the length and content after stripping
-print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string}' (length: {len(eventhub_connection_string)})")
-
-print(f"GMB_DEBUG: EH Connection String (pre-trimmed): '{eventhub_connection_string_base64}'")
-eventhub_connection_string_base64_strip = dbutils.widgets.get("eventhub_connection_string_base64").strip()
-# Add a print statement to verify the length and content after stripping
-print(f"GMB_DEBUG: EH Connection String (trimmed): '{eventhub_connection_string_base64_strip}' (length: {len(eventhub_connection_string_base64_strip)})")
-
-
-# Your raw Event Hub connection string
-# raw_connection_string = eventhub_connection_string
-raw_connection_string = eventhub_connection_string.strip() + ";EntityPath=ioteventhub"
+# raw_connection_string = eventhub_connection_string plus EntityPath
+eventhub_connection_string_plus_entity = eventhub_connection_string.strip() + ";EntityPath=" + eventhub_instance_name
+print("🔒 raw_connection_string (pre-encryption): ", eventhub_connection_string_plus_entity)
 
 # Encrypt using Spark's JVM bridge
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
 sc = spark.sparkContext
-encrypted_connection_string = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(raw_connection_string)
-print("🔒 Final EH connection string (into ehConf) with EntityPath:", raw_connection_string)
+encrypted_connection_string = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(eventhub_connection_string_plus_entity)
+print("🔒 encrypted_connection_string into ehConf: ", encrypted_connection_string)
 
-# Use in your Event Hubs configuration
-# GMB:Try this on 20250703....
 ehConf = {
     "eventhubs.connectionString": encrypted_connection_string
 }
-    # 'eventhubs.connectionString': eventhub_connection_string_base64,
-# ehConf = {
-#     "eventhubs.connectionString": eventhub_connection_string_decoded,
-#     "shouldEncryptConnectionString": "false"
-# }
 
 print("📡 Event Hub configuration loaded:")
 print(ehConf)
@@ -122,10 +98,10 @@ json_df.printSchema()
 
 # Configure the connection and write details for Azure Cosmos DB.
 cosmos_config = {
-    "spark.cosmos.accountEndpoint": cosmos_db_endpoint, # Corrected key
-    "spark.cosmos.accountKey": cosmos_db_key,           # Corrected key
-    "spark.cosmos.database": cosmos_db_database,         # Corrected key
-    "spark.cosmos.container": cosmos_db_container,       # Corrected key
+    "spark.cosmos.accountEndpoint": cosmos_db_endpoint, 
+    "spark.cosmos.accountKey": cosmos_db_key,     
+    "spark.cosmos.database": cosmos_db_database,    
+    "spark.cosmos.container": cosmos_db_container,  
     "spark.cosmos.write.strategy": "ItemOverwrite"
 }
 

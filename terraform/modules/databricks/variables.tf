@@ -11,14 +11,20 @@ variable "cosmos_db_key" {
   sensitive   = true
 }
 
+variable "eventhub_instance_name" {
+  description = "Instance name for the Event Hub instance"
+  type        = string
+  sensitive   = true
+}
+
 variable "eventhub_connection_string" {
   description = "Primary connection string for the Event Hub-compatible endpoint"
   type        = string
   sensitive   = true
 }
 
-variable "eventhub_connection_string_base64" {
-  description = "Base64encode of primary connection string for the Event Hub-compatible endpoint"
+variable "eventhub_connection_string_plus_entity" {
+  description = "Primary connection string for the Event Hub-compatible endpoint plus entity"
   type        = string
   sensitive   = true
 }

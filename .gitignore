@@ -63,3 +63,5 @@ Thumbs.db
 # Backup or temporary files
 *.bak
 *.tmp
+
+GmbNotes.txt

@@ -182,13 +182,3 @@ resource "azurerm_role_assignment" "aks_cluster_acr_pull_permission" {
     azurerm_kubernetes_cluster.iot_aks_cluster
   ]
 }
-
-# # Execute a local shell AFTER "terraform apply"
-# # databricks jobs run-now --job-id=947668165026505
-# # Triggers the job that was provisioned using Terraform (ID pulled from module.databricks.job_id)
-# resource "null_resource" "databricks_trigger_job" {
-#   provisioner "local-exec" {
-#     command = "databricks jobs run-now --job-id=${module.databricks.job_id}"
-#   }
-#   depends_on = [module.databricks]
-# }

@@ -30,6 +30,12 @@ variable "owner" {
   default     = "dev-team"
 }
 
+variable "eventhub_instance_name" {
+  description = "Event Hub instance name"
+  type        = string
+  default     = "ioteventhub"
+}
+
 variable "iot_hub_name" {
   description = "IoT Hub name"
   type        = string

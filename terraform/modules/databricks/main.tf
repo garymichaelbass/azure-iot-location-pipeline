@@ -5,7 +5,7 @@ data "databricks_node_type" "smallest" {
   local_disk = true
 }
 
-# Retrieves the latest long-term support (LTS) Spark version available on Databricks
+# Fetches the latest long-term support (LTS) Spark version available on Databricks
 data "databricks_spark_version" "latest_lts" {
   long_term_support = true
 }
@@ -15,16 +15,6 @@ resource "databricks_cluster" "iot_cluster" {
   # cluster_name            = "iot-location-cluster"
   cluster_name            = "iot-dbx-cluster"
   spark_version           = "16.4.x-scala2.12"
-
-  # node_type_id            = data.databricks_node_type.smallest.id
-  # Available node types (Databricks-compatible in East US 2):
-  # ✅ Databricks-compatible node types for East US 2:
-  # - Standard_E2s_v3    (2 vCPU, 16 GiB) → memory optimized
-  # - Standard_D2_v3     (2 vCPU, 8 GiB)  → general purpose
-  # - Standard_DS1_v2    (1 vCPU, 3.5 GiB) → lightweight test config (deprecated in this workspace)
-  # - Standard_E2s_v5    (2 vCPU, 16 GiB) → newer gen, if quota allows
-  # node_type_id            = "Standard_DS2_v2"
-  # node_type_id            = "Standard_B2s"
   node_type_id            = "Standard_DS3_v2"
   autotermination_minutes = 30
   num_workers             = 1

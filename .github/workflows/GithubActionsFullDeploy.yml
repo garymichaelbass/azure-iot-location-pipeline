@@ -230,16 +230,6 @@ jobs:
         run: |
           curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | bash
 
-      # - name: Trigger Databricks Job
-      #   env:
-      #     DATABRICKS_HOST: ${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_URL }}
-      #     DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }}
-      #   run: | 
-      #     echo "🔍 Triggering Databricks job..."
-      #     echo "DATABRICKS_HOST: $DATABRICKS_HOST"
-      #     echo "DATABRICKS_JOB_ID: ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
-      #     databricks jobs run-now ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
-
       - name: Trigger Databricks Job
         env:
           # DATABRICKS_HOST should be the URL *without* https:// for the CLI
