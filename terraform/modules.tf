@@ -23,7 +23,14 @@ module "databricks_iot" {
 
   eventhub_connection_string = azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string
   eventhub_connection_string_plus_entity = "${azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string};EntityPath=${var.eventhub_instance_name}"
-  eventhub_connection_string_base64 = base64encode(azurerm_iothub.iot_hub.shared_access_policy["iothubowner"].primary_connection_string)  # GMB ADD
+  # CRITICAL CORRECTION HERE: Use 'for' expression and 'one()' to safely find 'iothubowner'
+  eventhub_connection_string_base64 = base64encode(
+    one([
+      for policy in azurerm_iothub.iot_hub.shared_access_policy : policy.primary_connection_string
+      if policy.key_name == "iothubowner"
+    ])
+  )
+  
   databricks_workspace_url   = azurerm_databricks_workspace.iot_databricks_workspace.workspace_url
 
   providers = {
