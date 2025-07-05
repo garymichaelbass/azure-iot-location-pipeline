@@ -6,10 +6,10 @@ variable "resource_group_name" {
   default     = "iot-location-rg"
 }
 
-variable "resource_group_id" {
-  description = "ID of the resource group"
-  type        = string
-}
+# variable "resource_group_id" {
+#   description = "ID of the resource group"
+#   type        = string
+# }
 
 variable "location" {
   description = "Azure region"
