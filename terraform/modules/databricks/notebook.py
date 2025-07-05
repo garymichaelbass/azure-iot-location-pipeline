@@ -28,7 +28,6 @@ except NameError:
 
 # Databricks notebook to read from Event Hub and write to Cosmos DB
 
-
 # Import necessary types for defining the schema of the incoming data
 from pyspark.sql.types import StructType, StringType, DoubleType, LongType
 # Import functions for data transformation, specifically for parsing JSON
@@ -95,6 +94,7 @@ raw_df = spark.readStream \
 print("✅ Successfully connected to Event Hub.")
 
 # Optional: Stream raw Event Hub messages to console for debugging
+print("✅ Stream raw Event Hub message to console for debugging:")
 raw_df.selectExpr("cast(body as string) as raw_json").writeStream \
     .format("console") \
     .outputMode("append") \
@@ -112,31 +112,25 @@ from pyspark.sql.functions import when, lit
 # Parse JSON and handle missing timestamps
 json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
 
-# Replace null timestamps with current time (or a default)
+# # Replace null timestamps with current time (or a default)
+# json_df = json_df.withColumn(
+#     "timestamp",
+#     when(col("timestamp").isNull(), lit(0)).otherwise(col("timestamp"))
+# )
+
+# # Add a unique ID field
+# json_df = json_df.withColumn("id", concat_ws("-", col("deviceId"), col("timestamp")))
+
+from pyspark.sql.functions import unix_timestamp, when
+
+# Replace null timestamps with current time
 json_df = json_df.withColumn(
     "timestamp",
-    when(col("timestamp").isNull(), lit(0)).otherwise(col("timestamp"))
+    when(col("timestamp").isNull(), unix_timestamp()).otherwise(col("timestamp"))
 )
 
-# Add a unique ID field
+# Add a unique ID field using deviceId and timestamp
 json_df = json_df.withColumn("id", concat_ws("-", col("deviceId"), col("timestamp")))
-
-def log_batch(df, epoch_id):
-    count = df.count()
-    print(f"📦 Writing batch {epoch_id} with {count} records")
-    if count > 0:
-        df.show(5, truncate=False)  # Preview first 5 rows
-        df.write \
-            .format("cosmos.oltp") \
-            .options(**cosmos_config) \
-            .mode("append") \
-            .save()
-
-
-
-
-
-            
 
 print("🧬 Schema after parsing and adding id:")
 json_df.printSchema()
@@ -162,21 +156,31 @@ dbutils.fs.mkdirs(checkpoint_path)
 print(f"✅ Checkpoint location {checkpoint_path} created.")
 
 # Write to Cosmos DB with batch logging
+   
+# Function to "log_batch" to Cosmos, which is call in the json_df.writeStream
 def log_batch(df, epoch_id):
     count = df.count()
-    print(f"📦 Writing batch {epoch_id} with {count} records")
+    print(f"📦 Writing batch {epoch_id} with {count} records; VERIFY next message is 'Batch {epoch_id} written to Cosmos DB.'")
     if count > 0:
+        df.show(5, truncate=False)
         df.write \
             .format("cosmos.oltp") \
             .options(**cosmos_config) \
             .mode("append") \
             .save()
+        print(f"✅ Batch {epoch_id} written to Cosmos DB.")
+
+json_df.writeStream \
+    .format("console") \
+    .outputMode("append") \
+    .option("truncate", False) \
+    .start()
+
 
 json_df.writeStream \
     .foreachBatch(log_batch) \
     .option("checkpointLocation", checkpoint_path) \
     .start()
-
 
 # GMB Using the above section and NOT this section to write to Cosmos
 # # # Write the processed streaming data from `json_df` to Azure Cosmos DB.
@@ -203,3 +207,14 @@ class DebugListener(StreamingQueryListener):
         print(f"💥 Query terminated: {event.id}")
 
 spark.streams.addListener(DebugListener())
+
+print("🛰️ Active streaming queries:")
+for query in spark.streams.active:
+    print(f"- Name: {query.name}")
+    print(f"  ID: {query.id}")
+    print(f"  Is Active: {query.isActive}")
+    print(f"  Status: {query.status}")
+    print(f"  Source: {query.source}")
+    print(f"  Sink: {query.sink}")
+    print(f"  Description: {query.toString()}")
+    print("—" * 60)
