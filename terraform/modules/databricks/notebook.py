@@ -233,17 +233,3 @@ for query in spark.streams.active:
     print(f"  Status: {query.status}")
     print(f"  Description: {query}")
     print("—" * 60)
-
-# Trigger the job and capture run_id
-run_output=$(databricks jobs run-now --job-id 715322852778193 --json)
-run_id=$(echo "$run_output" | jq -r '.run_id')
-
-# Poll for completion
-while true; do
-  status=$(databricks runs get --run-id $run_id | jq -r '.state.life_cycle_state')
-  if [[ "$status" == "TERMINATED" || "$status" == "SKIPPED" || "$status" == "INTERNAL_ERROR" ]]; then
-    break
-  fi
-  echo "⏳ Job still running... status: $status"
-  sleep 30
-done
