@@ -231,5 +231,5 @@ for query in spark.streams.active:
     print(f"  ID: {query.id}")
     print(f"  Is Active: {query.isActive}")
     print(f"  Status: {query.status}")
-    print(f"  Description: {query.toString()}")
+    print(f"  Description: {query}")
     print("—" * 60)
