@@ -193,7 +193,7 @@ json_df.writeStream \
 
 print(f"✅ Streaming pipeline initialized with checkpoint: {checkpoint_path}. Data is flowing!")
 
-print("✅ Streaming pipeline initialized. Data is flowing!")
+print("✅ Streaming pipeline initialized. Data is flowing! ")
 
 # Surface stats like record volume, throughput, and termination alerts directly into job logs.
 from pyspark.sql.streaming import StreamingQueryListener
