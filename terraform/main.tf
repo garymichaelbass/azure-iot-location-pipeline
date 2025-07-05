@@ -1,5 +1,7 @@
 # azure-iot-location-monitoring\terraform\main.tf
 
+# Lots of info from https://learn.microsoft.com/en-us/azure/iot-dps/quick-setup-auto-provision-terraform?tabs=bash
+
 # Define the Azure resource group to serve as the container for all deployment resources. 
 resource "azurerm_resource_group" "iot_resource_group" {
   name     = var.resource_group_name
@@ -10,56 +12,6 @@ resource "azurerm_resource_group" "iot_resource_group" {
     project     = var.project
     owner       = var.owner
   }
-}
-
-# Create Event Hub namespace to manage Event Hub entities within namespace and create an FQDN as endpoint.
-resource "azurerm_eventhub_namespace" "iot_eventhub_namespace" {
-  name                = "ioteventns"
-  location            = var.location
-  resource_group_name = azurerm_resource_group.iot_resource_group.name
-  sku                 = "Standard"
-  capacity            = 1
-
-  tags = {
-    environment = var.environment
-    project     = var.project
-    owner       = var.owner
-  }
-}
-
-# Provision an Azure IoT Hub. Enables fallback routing to the Event Hub-compatible endpoint.
-resource "azurerm_iothub" "iot_hub" {
-  name                = var.iot_hub_name    # iotlocationhub
-  location            = var.location
-  resource_group_name = azurerm_resource_group.iot_resource_group.name
-
-  sku {
-    name     = "S1"
-    capacity = 1
-  }
-
-  fallback_route {
-    enabled         = true
-    source          = "DeviceMessages"
-    endpoint_names  = ["events"]
-  }
-
-  tags = {
-    environment = var.environment
-    project     = var.project
-    owner       = var.owner
-  }
-}
-
-resource "azurerm_iothub_shared_access_policy" "iot_hub_connection_policy" {
-  name                = "iothub-owner-policy"
-  resource_group_name = azurerm_resource_group.iot_resource_group.name
-  iothub_name         = azurerm_iothub.iot_hub.name
-
-  registry_read   = true
-  registry_write  = true
-  service_connect = true
-  device_connect  = true
 }
 
 # Provision an IoT Simulator Device as a "null resource"
@@ -82,6 +34,90 @@ resource "null_resource" "register_iot_simulator_device" {
 
   depends_on = [azurerm_iothub.iot_hub]
 }
+
+# Create Event Hub namespace to manage Event Hub entities within namespace and create an FQDN as endpoint.
+resource "azurerm_eventhub_namespace" "iot_eventhub_namespace" {
+  name                = "ioteventns"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.iot_resource_group.name
+  sku                 = "Standard"
+  capacity            = 1
+
+  tags = {
+    environment = var.environment
+    project     = var.project
+    owner       = var.owner
+  }
+}
+
+# Create Authorization Rule that HOPEFULLY creates an endpoint for the IoT Hub
+resource "azurerm_eventhub_authorization_rule" "iot_hub_send_rule" {
+  name                = "iot-hub-send"
+  resource_group_name = azurerm_resource_group.iot_resource_group.name
+  namespace_name      = azurerm_eventhub_namespace.iot_eventhub_ns.name
+  eventhub_name       = azurerm_eventhub.iot_eventhub.name
+
+  send = true
+}
+
+# Provision an Azure IoT Hub. NO LONGER ... Enables fallback routing to the Event Hub-compatible endpoint.
+resource "azurerm_iothub" "iot_hub" {
+  name                = var.iot_hub_name    # iotlocationhub
+  location            = var.location
+  resource_group_name = azurerm_resource_group.iot_resource_group.name
+
+  sku {
+    name     = "S1"
+    capacity = 1
+  }
+
+  # fallback_route {
+  #   enabled         = true
+  #   source          = "DeviceMessages"
+  #   endpoint_names  = ["events"]
+  # }
+
+  endpoint {
+    type              = "AzureIotHub.EventHub"
+    connection_string = azurerm_eventhub_authorization_rule.my_terraform_authorization_rule.primary_connection_string
+    name              = "export"
+  }
+
+  route {
+    name           = "export"
+    source         = "DeviceMessages"
+    condition      = "true"
+    endpoint_names = ["export"]
+    enabled        = true
+  }
+
+  tags = {
+    environment = var.environment
+    project     = var.project
+    owner       = var.owner
+  }
+}
+
+
+resource "azurerm_iothub_shared_access_policy" "iot_hub_connection_policy" {
+  name                = "iothub-owner-policy"
+  resource_group_name = azurerm_resource_group.iot_resource_group.name
+  iothub_name         = azurerm_iothub.iot_hub.name
+
+  registry_read   = true
+  registry_write  = true
+  service_connect = true
+  device_connect  = true
+}
+
+# resource "azurerm_iothub_endpoint_eventhub" "eventhub_endpoint" {
+#   name        = "eventhub-endpoint"
+#   iothub_id   = azurerm_iothub.iot_hub.id
+
+#   eventhub_name     = azurerm_eventhub.iot_eventhub.name
+#   namespace_name    = azurerm_eventhub_namespace.iot_eventhub_ns.name
+#   connection_string = azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string
+# }
 
 # Create an Event Hub instance to buffer and transport device telemetry messages.
 resource "azurerm_eventhub" "iot_eventhub" {
