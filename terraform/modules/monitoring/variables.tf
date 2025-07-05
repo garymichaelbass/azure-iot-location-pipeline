@@ -10,11 +10,10 @@ variable "resource_group_name" {
   type        = string
 }
 
-# Remove the following as it is causing a deployment error due to modules not having it defined yet
-# variable "resource_group_id" {
-#   description = "ID of the resource group"
-#   type        = string
-# }
+variable "resource_group_id" {
+  description = "ID of the resource group"
+  type        = string
+}
 
 variable "aks_cluster_id" {
   description = "ID of the AKS cluster to attach monitoring"
