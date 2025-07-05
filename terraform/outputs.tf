@@ -70,10 +70,6 @@ output "databricks_job_run_url" {
   value       = "${azurerm_databricks_workspace.iot_databricks_workspace.workspace_url}#job/${module.databricks_iot.databricks_job_id}"
 }
 
-# output "databricks_notebook_full_path" {
-#   description = "Uploaded path of the IoT notebook"
-#   value       = module.databricks_iot.databricks_notebook_path
-# }
 
 output "cosmos_db_endpoint" {
   description = "Database endpoint"
@@ -90,17 +86,12 @@ output "cosmos_db_sql_container" {
   value = azurerm_cosmosdb_sql_container.iot_cosmosdb_sql_container.name
 }
 
-
-
-
-
-
 output "grafana_endpoint" {
-  value       = module.monitoring.databricks_notebook_pathazurerm_dashboard_grafana.iot_grafana.endpoint
+  value       = module.monitoring_iot.databricks_notebook_pathazurerm_dashboard_grafana.iot_grafana.endpoint
   description = "Public endpoint for the Azure Managed Grafana instance"
 }
 
 output "grafana_resource_id" {
   description = "Azure resource ID of the Grafana instance"
-  value = module.monitoring.databricks_job_id
+  value = module.monitorin_iot.databricks_job_id
 }

@@ -1,6 +1,6 @@
 # azure-iot-location-monitoring\terraform\modules.tf  
 
-module "monitoring" {
+module "monitoring_iot" {
   source              = "./modules/monitoring"
   location            = var.location
   resource_group_name = azurerm_resource_group.iot_resource_group.name
