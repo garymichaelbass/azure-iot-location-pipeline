@@ -51,10 +51,10 @@ resource "azurerm_eventhub_namespace" "iot_eventhub_namespace" {
 }
 
 # Create Authorization Rule that HOPEFULLY creates an endpoint for the IoT Hub
-resource "azurerm_eventhub_authorization_rule" "iot_hub_send_rule" {
+resource "azurerm_eventhub_authorization_rule" "my_terraform_authorization_rule" {
   name                = "iot-hub-send"
   resource_group_name = azurerm_resource_group.iot_resource_group.name
-  namespace_name      = azurerm_eventhub_namespace.iot_eventhub_ns.name
+  namespace_name      = azurerm_eventhub_namespace.iot_eventhub_namespace.name
   eventhub_name       = azurerm_eventhub.iot_eventhub.name
 
   send = true
