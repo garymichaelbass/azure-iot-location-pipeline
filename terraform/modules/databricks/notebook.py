@@ -138,6 +138,7 @@ json_df.writeStream \
     .option("checkpointLocation", checkpoint_path) \
     .start()
 
+
 # GMB Using the above section and NOT this section to write to Cosmos
 # # # Write the processed streaming data from `json_df` to Azure Cosmos DB.
 # json_df.writeStream \
