@@ -251,33 +251,6 @@ jobs:
           # Use the new CLI command syntax (job ID as positional argument)
           databricks jobs run-now ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
 
-  run-databricks-job:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Install Databricks CLI v0.205+
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | bash
-          databricks --version
-
-      - name: Authenticate Databricks CLI
-        run: |
-          databricks auth login --host "$DATABRICKS_HOST" --token "$DATABRICKS_TOKEN"
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-
-      - name: Trigger and Monitor Databricks Job
-        run: |
-          echo "🚀 Triggering Databricks job..."
-          run_output=$(databricks jobs run-now --job-id 715322852778193 --output json)
-          echo "📦 Raw run output: $run_output"
-
-          run_id=$(echo "$run_output" | jq -r '.run_id')
-          echo "🆔 Run ID: $run_id"
-
           while true; do
             status=$(databricks runs get --run-id "$run_id" --output json | jq -r '.state.life_cycle_state')
             result_state=$(databricks runs get --run-id "$run_id" --output json | jq -r '.state.result_state')
@@ -293,6 +266,3 @@ jobs:
             fi
             sleep 30
           done
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}

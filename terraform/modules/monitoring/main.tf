@@ -6,6 +6,8 @@ resource "azurerm_dashboard_grafana" "iot_grafana" {
   location               = var.location
   resource_group_name    = var.resource_group_name
   grafana_major_version  = 11
+  api_key_enabled        = true
+  public_network_access_enabled = true
 
   identity {
     type = "SystemAssigned"
@@ -15,6 +17,10 @@ resource "azurerm_dashboard_grafana" "iot_grafana" {
     environment = var.environment
     project     = var.project
     owner       = var.owner
+  }
+
+  azure_monitor_workspace_integrations {
+    resource_id = var.resource_group_id
   }
 }
 

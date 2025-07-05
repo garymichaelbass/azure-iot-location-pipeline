@@ -10,6 +10,11 @@ variable "resource_group_name" {
   type        = string
 }
 
+variable "resource_group_id" {
+  description = "ID of the resource group"
+  type        = string
+}
+
 variable "aks_cluster_id" {
   description = "ID of the AKS cluster to attach monitoring"
   type        = string
