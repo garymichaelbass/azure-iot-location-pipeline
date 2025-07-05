@@ -28,7 +28,7 @@ try:
         msg = Message(json.dumps(data))
         client.send_message(msg)
         logging.info(f"Sent message: {data}")
-        time.sleep(60)
+        time.sleep(5)
 
 except KeyboardInterrupt:
     logging.info("Simulation interrupted by user. Closing connection.")
