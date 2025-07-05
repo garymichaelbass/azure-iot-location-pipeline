@@ -89,3 +89,18 @@ output "cosmos_db_sql_container" {
   description = "Cosmos database container"
   value = azurerm_cosmosdb_sql_container.iot_cosmosdb_sql_container.name
 }
+
+
+
+
+
+
+output "grafana_endpoint" {
+  value       = module.monitoring.databricks_notebook_pathazurerm_dashboard_grafana.iot_grafana.endpoint
+  description = "Public endpoint for the Azure Managed Grafana instance"
+}
+
+output "grafana_resource_id" {
+  description = "Azure resource ID of the Grafana instance"
+  value = module.monitoring.databricks_job_id
+}
