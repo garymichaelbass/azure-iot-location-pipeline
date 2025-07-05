@@ -19,9 +19,10 @@ resource "azurerm_dashboard_grafana" "iot_grafana" {
     owner       = var.owner
   }
 
-  azure_monitor_workspace_integrations {
-    resource_id = var.resource_group_id
-  }
+  # GMB Add this in later.
+  # azure_monitor_workspace_integrations {
+  #   resource_id = var.resource_group_id
+  # }
 }
 
 # Grant Grafana permissions to read monitoring data from the AKS cluster
