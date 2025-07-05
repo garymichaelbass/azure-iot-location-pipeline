@@ -198,11 +198,28 @@ print("✅ Streaming pipeline initialized. Data is flowing!")
 # Surface stats like record volume, throughput, and termination alerts directly into job logs.
 from pyspark.sql.streaming import StreamingQueryListener
 
+# class DebugListener(StreamingQueryListener):
+#     def onQueryStarted(self, event):
+#         print(f"🔄 Query started: {event.name}")
+#     def onQueryProgress(self, event):
+#         print(f"📈 Progress update: {event.progress.numInputRows} rows received")
+#     def onQueryTerminated(self, event):
+#         print(f"💥 Query terminated: {event.id}")
+        
 class DebugListener(StreamingQueryListener):
     def onQueryStarted(self, event):
-        print(f"🔄 Query started: {event.name}")
+        print(f"🔄 Query started: {event.name} (ID: {event.id})")
+
     def onQueryProgress(self, event):
-        print(f"📈 Progress update: {event.progress.numInputRows} rows received")
+        progress = event.progress
+        print(f"📈 Progress update for batch {progress['batchId']}:")
+        print(f"   ⏱ Trigger duration: {progress['durationMs'].get('triggerExecution', 'N/A')} ms")
+        print(f"   📥 Input rows: {progress['numInputRows']}")
+        print(f"   📤 Output rows: {progress['sink'].get('numOutputRows', 'N/A')}")
+        print(f"   ⚡ Input rate: {progress.get('inputRowsPerSecond', 'N/A')} rows/sec")
+        print(f"   ⚡ Processing rate: {progress.get('processedRowsPerSecond', 'N/A')} rows/sec")
+        print("—" * 60)
+
     def onQueryTerminated(self, event):
         print(f"💥 Query terminated: {event.id}")
 
@@ -214,7 +231,5 @@ for query in spark.streams.active:
     print(f"  ID: {query.id}")
     print(f"  Is Active: {query.isActive}")
     print(f"  Status: {query.status}")
-    print(f"  Source: {query.source}")
-    print(f"  Sink: {query.sink}")
     print(f"  Description: {query.toString()}")
     print("—" * 60)
