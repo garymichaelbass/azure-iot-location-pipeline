@@ -257,10 +257,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Databricks CLI and jq
+      - name: Install Databricks CLI v0.205+
         run: |
-          pip install databricks-cli --upgrade
-          sudo apt-get update && sudo apt-get install -y jq
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | bash
+          databricks --version
+
+      - name: Authenticate Databricks CLI
+        run: |
+          databricks auth login --host "$DATABRICKS_HOST" --token "$DATABRICKS_TOKEN"
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
       - name: Trigger and Monitor Databricks Job
         run: |
