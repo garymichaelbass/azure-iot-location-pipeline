@@ -265,15 +265,15 @@ jobs:
       - name: Trigger and Monitor Databricks Job
         run: |
           echo "🚀 Triggering Databricks job..."
-          run_output=$(databricks jobs run-now --job-id 715322852778193 --json)
+          run_output=$(databricks jobs run-now --job-id 715322852778193 --output json)
           echo "📦 Raw run output: $run_output"
 
           run_id=$(echo "$run_output" | jq -r '.run_id')
           echo "🆔 Run ID: $run_id"
 
           while true; do
-            status=$(databricks runs get --run-id "$run_id" | jq -r '.state.life_cycle_state')
-            result_state=$(databricks runs get --run-id "$run_id" | jq -r '.state.result_state')
+            status=$(databricks runs get --run-id "$run_id" --output json | jq -r '.state.life_cycle_state')
+            result_state=$(databricks runs get --run-id "$run_id" --output json | jq -r '.state.result_state')
             echo "⏳ Job status: $status"
 
             if [[ "$status" == "TERMINATED" || "$status" == "SKIPPED" || "$status" == "INTERNAL_ERROR" ]]; then
