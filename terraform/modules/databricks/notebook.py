@@ -94,10 +94,49 @@ raw_df = spark.readStream \
 
 print("✅ Successfully connected to Event Hub.")
 
+# Optional: Stream raw Event Hub messages to console for debugging
+raw_df.selectExpr("cast(body as string) as raw_json").writeStream \
+    .format("console") \
+    .outputMode("append") \
+    .option("truncate", False) \
+    .start()
+
 # Parse the raw Event Hub message body, which is a binary string, into a structured JSON format. 
 # NOTE: Also add the required 'id' field
+# json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
+# json_df = json_df.withColumn("id", concat_ws("-", col("deviceId"), col("timestamp")))
+
+# LATEST ADD FROM 20250704  8:47pm
+from pyspark.sql.functions import when, lit
+
+# Parse JSON and handle missing timestamps
 json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
+
+# Replace null timestamps with current time (or a default)
+json_df = json_df.withColumn(
+    "timestamp",
+    when(col("timestamp").isNull(), lit(0)).otherwise(col("timestamp"))
+)
+
+# Add a unique ID field
 json_df = json_df.withColumn("id", concat_ws("-", col("deviceId"), col("timestamp")))
+
+def log_batch(df, epoch_id):
+    count = df.count()
+    print(f"📦 Writing batch {epoch_id} with {count} records")
+    if count > 0:
+        df.show(5, truncate=False)  # Preview first 5 rows
+        df.write \
+            .format("cosmos.oltp") \
+            .options(**cosmos_config) \
+            .mode("append") \
+            .save()
+
+
+
+
+
+            
 
 print("🧬 Schema after parsing and adding id:")
 json_df.printSchema()
