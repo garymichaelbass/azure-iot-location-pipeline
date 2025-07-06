@@ -1,6 +1,6 @@
 # azure-iot-location-monitoring\terraform\modules\monitoring\main.tf
 
-resource "azurerm_monitor_account" "iot_monitor_workspace" {
+resource "azurerm_monitor_workspace" "iot_monitor_workspace" {
   name                = "${var.prefix}-monitor-workspace"
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -34,7 +34,7 @@ resource "azurerm_dashboard_grafana" "iot_grafana" {
   # GMB Add this in later.
   azure_monitor_workspace_integrations {
     # CORRECTED: Referencing the ID of the azurerm_monitor_account resource
-    resource_id = azurerm_monitor_account.iot_monitor_workspace.id
+    resource_id = azurerm_monitor_workspace.iot_monitor_workspace.id
   }
 }
 
