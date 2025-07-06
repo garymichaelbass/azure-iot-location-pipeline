@@ -229,3 +229,4 @@ resource "azurerm_role_assignment" "aks_cluster_acr_pull_permission" {
     azurerm_kubernetes_cluster.iot_aks_cluster
   ]
 }
+

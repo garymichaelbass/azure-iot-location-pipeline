@@ -1,5 +1,17 @@
 # azure-iot-location-monitoring\terraform\modules\monitoring\main.tf
 
+resource "azurerm_monitor_account" "iot_monitor_workspace" {
+  name                = "${var.prefix}-monitor-workspace"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+
+  tags = {
+    environment = var.environment
+    project     = var.project
+    owner       = var.owner
+  }
+}
+
 # Deploy an Azure Managed Grafana instance with system-assigned identity and tags for ownership
 resource "azurerm_dashboard_grafana" "iot_grafana" {
   name                   = "${var.prefix}-grafana"
@@ -19,9 +31,10 @@ resource "azurerm_dashboard_grafana" "iot_grafana" {
     owner       = var.owner
   }
 
-  # GMB Add this in later.
+  # # GMB Add this in later.
   azure_monitor_workspace_integrations {
-    resource_id = var.resource_group_id
+    # CORRECTED: Referencing the ID of the azurerm_monitor_account resource
+    resource_id = azurerm_monitor_account.iot_monitor_workspace.id
   }
 }
 
