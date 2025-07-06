@@ -209,6 +209,25 @@ It's often a good idea to perform an initial `terraform apply` locally to ensure
 4. **Set Up Grafana Dashboards**:
    - Access Grafana through the Azure portal.
    - Import the provided dashboards to visualize the telemetry data.
+   - From the terraform directory, execute "terraform outputs" and go to the grafana_endpoint
+              EXAMPLE: https://iot-grafana-XXXXXXXXXXXXXXX.eus2.grafana.azure.com
+  - In Grafana, go the left frame, click "Connections" and in the right click "Azure Monitor."
+  - In the upper right, click "Add new data source."
+  - Under Authentication, click "Load Subscriptions" then select your subscription.
+  - Click "Save & test."
+  - Note confirmation message of "Successfully connected to all Azure Monitor endpoints."
+  - In the top right corner, click "Explore data."
+  - In the "Service" dropdown, select "Logs".
+  - Click "Select a resource" and fill in the subscription and search for "iot-log" then click "Apply."
+  - In the query box, enter the following:
+  AzureDiagnostics
+        | where ResourceType == "IOTHUBS"
+        | where Category == "DeviceTelemetry"
+        | where TimeGenerated > ago(30m)
+        | summarize count() by bin(TimeGenerated, 5m), DeviceId_s
+
+
+
 
 
 ## Usage

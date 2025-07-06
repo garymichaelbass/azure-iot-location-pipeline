@@ -250,19 +250,3 @@ jobs:
           echo "DATABRICKS_JOB_ID (from GHA output): ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
           # Use the new CLI command syntax (job ID as positional argument)
           databricks jobs run-now ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
-
-          while true; do
-            status=$(databricks runs get --run-id "$run_id" --output json | jq -r '.state.life_cycle_state')
-            result_state=$(databricks runs get --run-id "$run_id" --output json | jq -r '.state.result_state')
-            echo "⏳ Job status: $status"
-
-            if [[ "$status" == "TERMINATED" || "$status" == "SKIPPED" || "$status" == "INTERNAL_ERROR" ]]; then
-              echo "✅ Job finished with result: $result_state"
-              if [[ "$result_state" != "SUCCESS" ]]; then
-                echo "❌ Job failed or was skipped."
-                exit 1
-              fi
-              break
-            fi
-            sleep 30
-          done
