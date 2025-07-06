@@ -52,3 +52,13 @@ variable "grafana_admin_principal_id" {
   type        = string
   sensitive   = true # Mark as sensitive as it's an ID for a principal
 }
+
+variable "iot_hub_id" {
+  description = "The resource ID of the IoT Hub"
+  type        = string
+}
+
+variable "cosmosdb_account_id" {
+  description = "The resource ID of the Cosmos DB account"
+  type        = string
+}

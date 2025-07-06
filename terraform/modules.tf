@@ -7,6 +7,9 @@ module "monitoring_iot" {
   resource_group_id   = azurerm_resource_group.iot_resource_group.id
   aks_cluster_id      = azurerm_kubernetes_cluster.iot_aks_cluster.id
   aks_cluster_name    = azurerm_kubernetes_cluster.iot_aks_cluster.name
+  iot_hub_id          = azurerm_iothub.iot_hub.id
+  cosmosdb_account_id = azurerm_cosmosdb_account.iot_cosmosdb_account.id
+
   prefix              = var.prefix
   environment         = var.environment
   owner               = var.owner

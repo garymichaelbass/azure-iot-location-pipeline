@@ -41,3 +41,14 @@ resource "azurerm_role_assignment" "grafana_admin_for_user" {
   depends_on           = [azurerm_dashboard_grafana.iot_grafana]
 }
 
+resource "azurerm_role_assignment" "grafana_monitor_reader_iothub" {
+  scope                = var.iot_hub_id  # Pass this in as a variable
+  role_definition_name = "Monitoring Reader"
+  principal_id         = azurerm_dashboard_grafana.iot_grafana.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "grafana_monitor_reader_cosmosdb" {
+  scope                = var.cosmosdb_account_id  # Pass this in as a variable
+  role_definition_name = "Monitoring Reader"
+  principal_id         = azurerm_dashboard_grafana.iot_grafana.identity[0].principal_id
+}
