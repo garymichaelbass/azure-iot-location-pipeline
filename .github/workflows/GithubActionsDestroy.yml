@@ -1,4 +1,4 @@
-# azure-iot-location-monitoring\.github\workflows\GithubActionsDestroy.tf
+# azure-iot-location-monitoring\.github\workflows\GithubActionsDestroy.tf 
 
 name: Terraform Destroy
 
