@@ -65,3 +65,27 @@ Thumbs.db
 *.tmp
 
 GmbNotes.txt
+
+20250706_01_IoTHub_AfterStartup.jpg
+20250706_02_IoT_EventHub_AfterStartup.jpg
+20250706_03_Databricks_AfterStartup.jpg
+20250706_04_CosmosDB_AfterStartup.jpg
+20250706_05_Grafana_AfterStartup.jpg
+20250706_06_Grafana_AverageRequests_AfterStartup.jpg
+20250706_07_Grafana_ServerSideLatency_AfterStartup.jpg
+20250706_08_IoT_Hub_Overview.jpg
+20250706_09_IoT_Hub_TelemetryMessagesSent.jpg
+20250706_10_EventHub_Overview.jpg
+20250706_11_CosmosDB_Entry.jpg
+20250706_12_CosmosDB_DataUsage.jpg
+20250706_13_IoTHub_TotalDeviceDataUsage.jpg
+20250706_14_IoTHub_TotalNumberOfMessagesUsed.jpg
+Azureresources_202506621_830am.xlsx
+dir.txt
+GmbTotalTotalAggregatedOfAllFiles_20250706a.txt
+terraform.tfstate
+terraform/.terraform/terraform.tfstate
+terraform/az.login.gmb.20250623.txt
+terraform/TmpGmbWorkspace1.yml
+terraform/TmpGmbWorkspace2.yml
+terraform/TmpGmbWorkspace3.yml

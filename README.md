@@ -28,41 +28,55 @@ The solution follows a clear data flow for location telemetry:
 The repository is organized as follows:
 
 ```text
-azure-iot-location-monitoring/
-├── .github/                     # GitHub Actions workflows
-│   └── workflows/
-│       └── full-deployment.yml  # Main CI/CD pipeline
-├── Architecture.jpg               # High-level system architecture diagram
-├── azure-creds.json              # Service Principal credentials (IGNORED by Git, used by CI/CD)
-├── CONTRIBUTING.md               # Guidelines for external contributors
-├── README.md                     # Main project README
-├── README_databricks.md          # Supplementary Databricks-specific guidance
-├── iot-simulator/                # Source code for the IoT device simulator (Python, Dockerfile)
-│   ├── device_simulator.py
-│   ├── Dockerfile
-│   └── requirements.txt
-├── kubernetes/                   # Kubernetes manifests for deploying the simulator to AKS
-│   └── simulator-deployment.yaml
-└── terraform/                   # Terraform configuration files for Azure infrastructure
-    ├── aks.tf                   # AKS cluster definition
-    ├── backend.tf               # Remote backend config for shared tfstate across local and CI/CD deployments
-    ├── main.tf                  # Core Azure resources (IoT Hub, Event Hub, CosmosDB, ACR)
-    ├── modules.tf               # Terraform module definitions (Databricks, Monitoring)
-    ├── outputs.tf               # Terraform outputs for deployed resources
-    ├── providers.tf             # Terraform provider configurations
-    ├── variables.tf             # Terraform input variables
-    ├── terraform.tfvars.json    # Local variables file (ignored by Git)
-    └── modules/                 
-        ├── databricks/           # Databricks cluster and notebook provisioning
-        │   ├── main.tf
-        │   ├── notebook.py
-        │   ├── providers.tf
-        │   └── variables.tf
-        └── monitoring/           # Monitoring stack: Azure Monitor, Grafana, Alerts
-            ├── dashboards/
-            ├── main.tf
-            ├── outputs.tf
-            └── variables.tf
++-- .github/                           # GitHub Actions workflows for CI/CD
+¦   +-- workflows/
+¦       +-- full-deployment.yml        # Main CI/CD pipeline for infrastructure deployment and application updates
++-- Architecture.jpg#                    High-level system architecture diagram
++-- azure-creds.json                   # Service Principal credentials (IGNORED by Git, used by CI/CD and local setup)
++-- azure-creds.json.template#           Template for azure-creds.json
++-- CONTRIBUTING.md#                     Guidelines for external contributors
++-- LICENSE#                             Project LICENSE
++-- README.md#                           This main Project README
++-- iot-simulator/                     # Source code for the IoT device simulator (Python, Dockerfile)
+¦   +-- device_simulator.py            # The core device simulation logic
+¦   +-- Dockerfile                     # Dockerfile for containerizing the simulator
+¦   +-- requirements.txt               # Python dependencies for the simulator
++-- kubernetes/                        # Kubernetes manifests for deploying the simulator to AKS
+¦   +-- simulator-deployment.yaml      # Kubernetes deployment and service definitions for the simulator
++-- terraform/                         # Terraform configuration files for Azure infrastructure deployment
+¦   +-- aks.tf                         # Azure Kubernetes Service (AKS) cluster definition
+¦   +-- backend.tf                     # Remote backend configuration for shared tfstate
+¦   +-- main.tf                        # Core Azure resources (IoT Hub, Event Hub, Cosmos DB, Azure Container Registry)
+¦   +-- modules.tf                     # Terraform module definitions (e.g., for Databricks, Monitoring)
+¦   +-- outputs.tf                     # Terraform outputs for deployed resource information
+¦   +-- providers.tf                   # Terraform provider configurations (AzureRM, Databricks, Grafana)
+¦   +-- variables.tf                   # Terraform input variables for customization
+¦   +-- terraform.tfvars.json          # Local variables file (IGNORED by Git, for local development)
+¦   +-- modules/                       # Reusable Terraform modules
+¦       +-- databricks/                # Databricks cluster and notebook provisioning
+¦       ¦   +-- main.tf                # Databricks module main configuration
+¦       ¦   +-- notebook.py            # Databricks notebook for data processing
+¦       ¦   +-- outputs.tf             # Databricks module outputs
+¦       ¦   +-- providers.tf           # Databricks module provider configurations
+¦       ¦   +-- variables.tf           # Databricks module input variables
+¦       +-- monitoring/                # Monitoring stack: Azure Monitor, Grafana, Alerts
+¦           +-- dashboards/            # Placeholder or actual Grafana dashboard JSON files
+¦           +-- main.tf                # Monitoring module main configuration (e.g., Grafana, Azure Monitor)
+¦           +-- outputs.tf             # Monitoring module outputs
+¦           +-- variables.tf           # Monitoring module input variables
++-- Screenshots/                       # Directory for project screenshots and visualizations (NEW)
+¦   +-- 20250708_01_IoTHub_Activity.jpg
+¦   +-- 20250708_02_IoTHub_TelemetryInAndOut.jpg
+¦   +-- 20250708_03_EventHub_OutgoingBytes.jpg
+¦   +-- 20250708_04_CosmosDB_DataUsage.jpg
+¦   +-- 20250708_05_CosmosDB_SQLQuery.jpg
+¦   +-- 20250708_06_CosmosDB_SQLQuery_Items.jpg
+¦   +-- 20250708_07_Grafana_CosmosDB_Usage.jpg
+¦   +-- 20250708_08_Grafana_CosmosDB_Usage_PlusDefinitions.jpg
+¦   +-- 20250708_09_Grafana_IoTHub_TotalDeviceUsage.jpg
+¦   +-- 20250708_10_Grafana_CosmosDB_TotalRequest.jpg
+¦   +-- 20250708_11_Grafana_IoTHub_TotalDeviceUsage__CosmosDB_TotalRequests__CosmosDB_Usage.jpg
+
 `
 
 ## Technologies Used
@@ -225,7 +239,6 @@ It's often a good idea to perform an initial `terraform apply` locally to ensure
         | where Category == "DeviceTelemetry"
         | where TimeGenerated > ago(30m)
         | summarize count() by bin(TimeGenerated, 5m), DeviceId_s
-
 
 
 

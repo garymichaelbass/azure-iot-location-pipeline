@@ -1,4 +1,4 @@
-# azure-iot-location-monitoring\.github\workflows\GithubActionsDestroy.tf 
+# azure-iot-location-monitoring\.github\workflows\GithubActionsDestroy.tf
 
 name: Terraform Destroy
 
@@ -65,38 +65,39 @@ jobs:
           # Print the captured output for debugging and visibility in GitHub Actions logs.
           echo "$OUTPUT"
 
-          # Check if the destroy command failed
-          if [ $DESTROY_EXIT_CODE -ne 0 ]; then
-            # Check if the failure was specifically due to a state lock error message.
-            if echo "$OUTPUT" | grep -q "Error acquiring the state lock"; then
-              echo "Terraform destroy failed due to state lock. Attempting to unlock..."
+          # GMB DELETE THE REST OF THIS UPON SUCCESSFULY DESTROY OF TERRAFORM
+          # # Check if the destroy command failed
+          # if [ $DESTROY_EXIT_CODE -ne 0 ]; then
+          #   # Check if the failure was specifically due to a state lock error message.
+          #   if echo "$OUTPUT" | grep -q "Error acquiring the state lock"; then
+          #     echo "Terraform destroy failed due to state lock. Attempting to unlock..."
 
-              # Extract the lock ID using grep with PCRE regex for lookbehind assertion (\K).
-              # The ID is expected to be a standard UUID format (36 characters with hyphens).
-              LOCK_ID=$(echo "$OUTPUT" | grep -oP 'ID:\s+\K[0-9a-f-]{36}' | head -n 1)
+          #     # Extract the lock ID using grep with PCRE regex for lookbehind assertion (\K).
+          #     # The ID is expected to be a standard UUID format (36 characters with hyphens).
+          #     LOCK_ID=$(echo "$OUTPUT" | grep -oP 'ID:\s+\K[0-9a-f-]{36}' | head -n 1)
 
-              if [ -n "$LOCK_ID" ]; then
-                echo "Found lock ID: $LOCK_ID. Attempting to force unlock..."
-                # Execute terraform force-unlock with the extracted ID and the --force flag.
-                # The -force flag is used for non-interactive environments to prevent prompting.
-                # If force-unlock fails, this entire step will fail.
-                terraform force-unlock -force "$LOCK_ID"
+          #     if [ -n "$LOCK_ID" ]; then
+          #       echo "Found lock ID: $LOCK_ID. Attempting to force unlock..."
+          #       # Execute terraform force-unlock with the extracted ID and the --force flag.
+          #       # The -force flag is used for non-interactive environments to prevent prompting.
+          #       # If force-unlock fails, this entire step will fail.
+          #       terraform force-unlock -force "$LOCK_ID"
 
-                echo "Retrying terraform destroy after force unlock..."
-                # Retry the terraform destroy command using the array.
-                # If this retry also fails, the entire GitHub Actions step will fail.
-                "${DESTROY_COMMAND[@]}"
-              else
-                echo "ERROR: Could not extract lock ID from the destroy command output."
-                echo "Manual intervention may be required to resolve the state lock."
-                exit 1 # Fail the step if lock ID couldn't be extracted.
-              fi
-            else
-              # The destroy command failed for a reason other than a state lock.
-              echo "ERROR: Terraform destroy failed for an unexpected reason (not a state lock)."
-              echo "Please review the output above for more details."
-              exit 1 # Fail the step for any other type of error.
-            fi
-          else
-            echo "Terraform destroy completed successfully on first attempt."
-          fi
+          #       echo "Retrying terraform destroy after force unlock..."
+          #       # Retry the terraform destroy command using the array.
+          #       # If this retry also fails, the entire GitHub Actions step will fail.
+          #       "${DESTROY_COMMAND[@]}"
+          #     else
+          #       echo "ERROR: Could not extract lock ID from the destroy command output."
+          #       echo "Manual intervention may be required to resolve the state lock."
+          #       exit 1 # Fail the step if lock ID couldn't be extracted.
+          #     fi
+          #   else
+          #     # The destroy command failed for a reason other than a state lock.
+          #     echo "ERROR: Terraform destroy failed for an unexpected reason (not a state lock)."
+          #     echo "Please review the output above for more details."
+          #     exit 1 # Fail the step for any other type of error.
+          #   fi
+          # else
+          #   echo "Terraform destroy completed successfully on first attempt."
+          # fi

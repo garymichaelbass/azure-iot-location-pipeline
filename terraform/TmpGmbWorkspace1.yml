@@ -1,40 +1,64 @@
-# GMB Add this in later.
-# Deploy an Azure Monitor Workspace
-resource "azurerm_monitor_account" "iot_monitor_workspace" {
-  name                = "${var.prefix}-monitor-workspace"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  // You might want to add tags here as well
-  tags = {
-    environment = var.environment
-    project     = var.project
-    owner       = var.owner
-  }
-}
+azure-iot-location-monitoring/
+├── .github/                           # GitHub Actions workflows for CI/CD
+│   └── workflows/
+│       └── full-deployment.yml        # Main CI/CD pipeline for infrastructure deployment and application updates
+├── Architecture.jpg                   # High-level system architecture diagram
+├── azure-creds.json                   # Service Principal credentials (IGNORED by Git, used by CI/CD and local setup)
+├── azure-creds.json.template          # Template for azure-creds.json
+├── CONTRIBUTING.md                    # Guidelines for external contributors
+├── LICENSE                            # Project license
+├── README.md                          # This main project README
+├── iot-simulator/                     # Source code for the IoT device simulator (Python, Dockerfile)
+│   ├── device_simulator.py            # The core device simulation logic
+│   ├── Dockerfile                     # Dockerfile for containerizing the simulator
+│   └── requirements.txt               # Python dependencies for the simulator
+├── kubernetes/                        # Kubernetes manifests for deploying the simulator to AKS
+│   └── simulator-deployment.yaml      # Kubernetes deployment and service definitions for the simulator
+├── terraform/                         # Terraform configuration files for Azure infrastructure deployment
+│   ├── aks.tf                         # Azure Kubernetes Service (AKS) cluster definition
+│   ├── backend.tf                     # Remote backend configuration for shared tfstate
+│   ├── main.tf                        # Core Azure resources (IoT Hub, Event Hub, Cosmos DB, Azure Container Registry)
+│   ├── modules.tf                     # Terraform module definitions (e.g., for Databricks, Monitoring)
+│   ├── outputs.tf                     # Terraform outputs for deployed resource information
+│   ├── providers.tf                   # Terraform provider configurations (AzureRM, Databricks, Grafana)
+│   ├── variables.tf                   # Terraform input variables for customization
+│   ├── terraform.tfvars.json          # Local variables file (IGNORED by Git, for local development)
+│   └── modules/                       # Reusable Terraform modules
+│       ├── databricks/                # Databricks cluster and notebook provisioning
+│       │   ├── main.tf                # Databricks module main configuration
+│       │   ├── notebook.py            # Databricks notebook for data processing
+│       │   ├── outputs.tf             # Databricks module outputs
+│       │   ├── providers.tf           # Databricks module provider configurations
+│       │   └── variables.tf           # Databricks module input variables
+│       └── monitoring/                # Monitoring stack: Azure Monitor, Grafana, Alerts
+│           ├── dashboards/            # Placeholder or actual Grafana dashboard JSON files
+│           ├── main.tf                # Monitoring module main configuration (e.g., Grafana, Azure Monitor)
+│           ├── outputs.tf             # Monitoring module outputs
+│           └── variables.tf           # Monitoring module input variables
+├── Screenshots/                       # Directory for project screenshots and visualizations (NEW)
+│   ├── 20250706_01_IoTHub_AfterStartup.jpg
+│   ├── 20250706_02_IoT_EventHub_AfterStartup.jpg
+│   ├── 20250706_03_Databricks_AfterStartup.jpg
+│   ├── 20250706_04_CosmosDB_AfterStartup.jpg
+│   ├── 20250706_05_Grafana_AfterStartup.jpg
+│   ├── 20250706_06_Grafana_AverageRequests_AfterStartup.jpg
+│   ├── 20250706_07_Grafana_ServerSideLatency_AfterStartup.jpg
+│   ├── 20250706_08_IoT_Hub_Overview.jpg
+│   ├── 20250706_09_IoT_Hub_TelemetryMessagesSent.jpg
+│   ├── 20250706_10_EventHub_Overview.jpg
+│   ├── 20250706_11_CosmosDB_Entry.jpg
+│   ├── 20250706_12_CosmosDB_DataUsage.jpg
+│   ├── 20250706_13_IoTHub_TotalDeviceDataUsage.jpg
+│   ├── 20250706_14_IoTHub_TotalNumberOfMessagesUsed.jpg
+│   ├── 20250708_01_IoTHub_Activity.jpg
+│   ├── 20250708_02_IoTHub_TelemetryInAndOut.jpg
+│   ├── 20250708_03_EventHub_OutgoingBytes.jpg
+│   ├── 20250708_04_CosmosDB_DataUsage.jpg
+│   ├── 20250708_05a_CosmosDB_SQLQuery.jpg
+│   ├── 20250708_05b_CosmosDB_SQLQuery_Items.jpg
+│   ├── 20250708_06_Grafana_CosmosDB_Usage.jpg
+│   ├── 20250708_06_Grafana_CosmosDB_Usage_PlusDefinitions.jpg
+│   ├── 20250708_07_Grafana_IoTHub_TotalDeviceUsage.jpg
+│   ├── 20250708_08_Grafana_CosmosDB_TotalRequest.jpg
+│   └── 20250708_09_Grafana_IoTHub_TotalDeviceUsage__CosmosDB_TotalRequests__CosmosDB_Usage.jpg
 
-
-# Deploy an Azure Managed Grafana instance with system-assigned identity and tags for ownership
-resource "azurerm_dashboard_grafana" "iot_grafana" {
-  name                        = "${var.prefix}-grafana"
-  location                    = var.location
-  resource_group_name         = var.resource_group_name
-  grafana_major_version       = 11
-  api_key_enabled             = true
-  public_network_access_enabled = true
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  tags = {
-    environment = var.environment
-    project     = var.project
-    owner       = var.owner
-  }
-
-  # GMB Add this in later.
-  azure_monitor_workspace_integrations {
-    # CORRECTED: Referencing the ID of the azurerm_monitor_account resource
-    resource_id = azurerm_monitor_account.iot_monitor_workspace.id
-  }
-}

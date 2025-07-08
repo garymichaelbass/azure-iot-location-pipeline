@@ -69,9 +69,9 @@ jobs:
           TERRAFORM_OUTPUTS=$(terraform output -json)
           
           # Debugging: Print raw Terraform outputs JSON for inspection
-          echo "--- Debug One: Raw Terraform Outputs JSON ---"
+          echo "--- Debug One Start: Raw Terraform Outputs JSON ---"
           echo "$TERRAFORM_OUTPUTS" | jq .
-          echo "--- End Debug One ---"
+          echo "--- Debug One End---"
 
           # Extract each output value into a TEMPORARY SHELL VARIABLE
           # This variable is available ONLY within this 'run' script.
@@ -85,23 +85,21 @@ jobs:
           DATABRICKS_JOB_ID_VALUE=$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_job_id.value // ""')
           DATABRICKS_WORKSPACE_URL_VALUE="https://$(echo "$TERRAFORM_OUTPUTS" | jq -r '.databricks_workspace_url_value.value // ""')"
 
-          # Now, write these shell variables to GITHUB_OUTPUT.
+          # Write the shell variables to GITHUB_OUTPUT.
           # These become available as steps.terraform_outputs.outputs.* in LATER steps.
+          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME_VALUE" >> "$GITHUB_OUTPUT"
           echo "IOT_SIMULATOR_DEVICE_NAME=$IOT_SIMULATOR_DEVICE_NAME_VALUE" >> "$GITHUB_OUTPUT"
+          echo "IOT_HUB_NAME=$IOT_HUB_NAME_VALUE" >> "$GITHUB_OUTPUT"
+          echo "DATABRICKS_JOB_ID=$DATABRICKS_JOB_ID_VALUE" >> "$GITHUB_OUTPUT"
+          echo "DATABRICKS_WORKSPACE_URL=$DATABRICKS_WORKSPACE_URL_VALUE" >> "$GITHUB_OUTPUT"
 
+          echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER_VALUE" >> "$GITHUB_OUTPUT"
           echo "AKS_KUBECFG<<EOF" >> "$GITHUB_OUTPUT"           # Adapt to kubecfg being multi-line
           echo "$AKS_KUBECFG_VALUE" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-          echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER_VALUE" >> "$GITHUB_OUTPUT"
-          echo "IOT_HUB_NAME=$IOT_HUB_NAME_VALUE" >> "$GITHUB_OUTPUT"
-          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME_VALUE" >> "$GITHUB_OUTPUT"
-
-          echo "DATABRICKS_JOB_ID=$DATABRICKS_JOB_ID_VALUE" >> "$GITHUB_OUTPUT"
-          echo "DATABRICKS_WORKSPACE_URL=$DATABRICKS_WORKSPACE_URL_VALUE" >> "$GITHUB_OUTPUT"
-
           # Debugging: Print the TEMPORARY SHELL VARIABLES to confirm they hold values
-          echo "--- Debug Two: Values of shell variables set in this step ---"
+          echo "--- Debug Two Start: Values of shell variables set in this step ---"
           echo "IOT_SIMULATOR_DEVICE_NAME_VALUE: '$IOT_SIMULATOR_DEVICE_NAME_VALUE'"
           echo "AKS_KUBECFG_VALUE: (Truncated for brevity, check raw JSON if needed)"
           # When printing this for debug, it will still show literal '\n' as a two-character sequence
@@ -111,7 +109,7 @@ jobs:
           echo "RESOURCE_GROUP_NAME_VALUE: '$RESOURCE_GROUP_NAME_VALUE'"
           echo "DATABRICKS_JOB_ID_VALUE: '$DATABRICKS_JOB_ID_VALUE'" # Debug print
           echo "DATABRICKS_WORKSPACE_URL_VALUE: '$DATABRICKS_WORKSPACE_URL_VALUE'" # Debug print
-          echo "--- End Debug Two ---"
+          echo "--- Debug Two End ---"
         working-directory: ./terraform
 
       - name: Get IoT device connection string via Azure CLI
@@ -147,7 +145,7 @@ jobs:
           mkdir -p "$(dirname "$KUBECONFIG_PATH")" # Ensure parent directory exists for kubeconfig.yaml
 
           echo "Writing kubeconfig to: $KUBECONFIG_PATH"
-          # *** CRITICAL FIX: Use echo -e to interpret '\n' and '\r' escape sequences ***
+
           # This will take the single string with literal \n from AKS_KUBECFG and expand it into proper newlines.
           echo -e "${{ steps.terraform_outputs.outputs.AKS_KUBECFG }}" > "$KUBECONFIG_PATH"
 
@@ -155,17 +153,15 @@ jobs:
           chmod 600 "$KUBECONFIG_PATH"
 
           # Export KUBECONFIG environment variable for all subsequent steps in this job.
-          # While we're using --kubeconfig explicitly, setting KUBECONFIG can still help
-          # if other tools implicitly rely on it.
           echo "KUBECONFIG=$KUBECONFIG_PATH" >> "$GITHUB_ENV"
 
-          echo "--- Debug Three: Contents of $KUBECONFIG_PATH (after echo -e) ---"
+          echo "--- Debug Three Start: Contents of $KUBECONFIG_PATH (after echo -e) ---"
           cat "$KUBECONFIG_PATH" # Verify the content is now correctly formatted YAML
-          echo "--- End Debug Three ---"
+          echo "--- Debug Three End ---"
 
-          echo "--- Debug Four: kubectl get nodes output ---"
+          echo "--- Debug Four Start: kubectl get nodes output ---"
           kubectl get nodes --kubeconfig "$KUBECONFIG_PATH" # Explicitly use the kubeconfig path
-          echo "--- End Debug Four ---"
+          echo "--- Debug Four End ---"
 
       # --- 3. Docker Image Build and Push ---
       - name: Log in to Azure Container Registry
@@ -224,7 +220,6 @@ jobs:
 
           kubectl get pods -l app=iot-simulator --kubeconfig "$KUBECONFIG_PATH"
           kubectl get deployments iot-simulator --kubeconfig "$KUBECONFIG_PATH"
-          # kubectl get services iot-simulator --kubeconfig "$KUBECONFIG_PATH" # Uncomment if you have this
 
       - name: Install New Databricks CLI
         run: |
@@ -233,7 +228,6 @@ jobs:
       - name: Trigger Databricks Job
         env:
           # DATABRICKS_HOST should be the URL *without* https:// for the CLI
-          # Your 'databricks_workspace_url_output' already provides this correctly from previous steps
           DATABRICKS_HOST: ${{ steps.terraform_outputs.outputs.DATABRICKS_WORKSPACE_URL }}
 
           # Unset DATABRICKS_TOKEN to avoid conflict with Azure AD authentication.
@@ -248,5 +242,6 @@ jobs:
           echo "🔍 Triggering Databricks job..."
           echo "DATABRICKS_HOST (from GHA output): $DATABRICKS_HOST"
           echo "DATABRICKS_JOB_ID (from GHA output): ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}"
+          
           # Use the new CLI command syntax (job ID as positional argument)
           databricks jobs run-now ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
