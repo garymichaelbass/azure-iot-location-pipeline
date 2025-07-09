@@ -245,3 +245,21 @@ jobs:
           
           # Use the new CLI command syntax (job ID as positional argument)
           databricks jobs run-now ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
+
+      - name: Capture IoT Dashboard URL
+        id: dashboard_output
+        run: |
+          DASHBOARD_URL=$(terraform output -raw iot_dashboard_url)
+          echo "IOT_DASHBOARD_URL=$DASHBOARD_URL" >> "$GITHUB_ENV"
+          echo "📊 Dashboard URL: $DASHBOARD_URL"
+
+      - name: Write Dashboard URL to GitHub Actions summary
+        run: |
+          {
+            echo "### 🚀 IoT Monitoring Deployment Complete"
+            echo ""
+            echo "**Grafana Dashboard URL:**"
+            echo ""
+            echo "[$IOT_DASHBOARD_URL]($IOT_DASHBOARD_URL)"
+          } >> $GITHUB_STEP_SUMMARY
+           

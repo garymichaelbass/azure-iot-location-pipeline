@@ -55,10 +55,6 @@ schema = StructType() \
     .add("longitude", DoubleType()) \
     .add("timestamp", LongType())
 
-# Retrieve parameters
-# GMB Delete this line after verification everything works
-# eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
-
 eventhub_connection_string_incl_entity = dbutils.widgets.get("eventhub_connection_string_incl_entity")
 
 cosmos_db_endpoint                     = dbutils.widgets.get("cosmos_db_endpoint")

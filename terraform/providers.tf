@@ -50,7 +50,6 @@ provider "azurerm" {
 
 }
 
-
 provider "azuread" {
   # Inherits authentication from the environment (e.g., GitHub Actions, az CLI)
 }
@@ -64,4 +63,3 @@ provider "databricks" {
 provider "random" {
   # No config needed; just initializes the plugin
 }
-

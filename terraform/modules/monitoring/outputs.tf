@@ -9,3 +9,8 @@ output "grafana_resource_id" {
   description = "Azure resource ID of the Grafana instance"
   value       = azurerm_dashboard_grafana.iot_grafana.id
 }
+
+output "iot_dashboard_url" {
+  description = "URL to view the IoT Grafana dashboard"
+  value       = "${azurerm_dashboard_grafana.iotdashboard.endpoint}/d/${azurerm_grafana_dashboard.iotdashboard.uid}"
+}

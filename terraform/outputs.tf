@@ -90,3 +90,7 @@ output "grafana_resource_id" {
   description = "Azure resource ID of the Grafana instance"
   value = module.monitoring_iot.grafana_resource_id
 }
+
+output "iot_dashboard_url" {
+  value = module.monitoring.iot_dashboard_url
+}
