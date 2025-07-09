@@ -1,6 +1,5 @@
 # azure-iot-location-monitoring/README.md
 
-# ```markdown
 # Azure IoT Location Monitoring
 
 This project implements a comprehensive IoT solution for real-time location monitoring using Azure services. 
@@ -23,14 +22,15 @@ The solution follows a clear data flow for location telemetry:
 
 `IoT_Device -> IoT_Hub -> Event_Hub -> Databricks -> Cosmos_DB -> Grafana`
 
-# ```
+
 ![Architecture Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/Architecture.jpg)
-# ```markdown
+
 
 ## Project Structure
 
 The repository is organized as follows:
 
+```markdown
 
 +-- .github/                            # GitHub Actions workflows for CI/CD
 ¦   +-- workflows/
@@ -81,8 +81,8 @@ The repository is organized as follows:
 ¦   +-- 20250708_09_Grafana_IoTHub_TotalDeviceUsage.jpg
 ¦   +-- 20250708_10_Grafana_CosmosDB_TotalRequest.jpg
 ¦   +-- 20250708_11_Grafana_IoTHub_TotalDeviceUsage__CosmosDB_TotalRequests__CosmosDB_Usage.jpg
+```
 
-`
 
 ## Technologies Used
 
