@@ -4,7 +4,7 @@
 # Azure IoT Location Monitoring
 
 This project implements a comprehensive IoT solution for real-time location monitoring using Azure services. 
-It enables the collection, processing, and tracking of location data from IoT devices.
+It enables the collection, processing, and tracking of location data from an IoT device.
 
 ## Architecture Overview
 
@@ -25,6 +25,10 @@ The solution follows a clear data flow for location telemetry:
 
 ![Architecture Diagram](./main/Architecture.jpg)
 ![Architecture Diagram](https://raw.githubusercontent.com/garymichaelbass/azure-iot-location-monitoring/main/Architecture.jpg)
+![Architecture Diagram](https://raw.githubusercontent.com/garymichaelbass/azure-iot-location-monitoring/main/Architecture.jpg)
+
+`Try Four GMB delete later`
+https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/Architecture.jpg\
 
 ## Project Structure
 
@@ -33,7 +37,8 @@ The repository is organized as follows:
 ```text
 +-- .github/                           # GitHub Actions workflows for CI/CD
 ¦   +-- workflows/
-¦       +-- full-deployment.yml        # Main CI/CD pipeline for infrastructure deployment and application updates
+¦       +-- GithubActionsDestroy.yml   # Main CI/CD pipeline for infrastructure Terraform destroy of the current environment
+¦       +-- GithubActionsFullDeploy.yml # Main CI/CD pipeline for infrastructure deployment and application updates
 +-- Architecture.jpg#                    High-level system architecture diagram
 +-- azure-creds.json                   # Service Principal credentials (IGNORED by Git, used by CI/CD and local setup)
 +-- azure-creds.json.template#           Template for azure-creds.json
