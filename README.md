@@ -2,7 +2,8 @@
 ```markdown
 # Azure IoT Location Monitoring
 
-This project implements a comprehensive IoT solution for real-time location monitoring using Azure services. It enables the collection, processing, and visualization of location data from IoT devices, providing insights into asset movements and statuses.
+This project implements a comprehensive IoT solution for real-time location monitoring using Azure services. 
+It enables the collection, processing, and tracking of location data from IoT devices.
 
 ## Architecture Overview
 

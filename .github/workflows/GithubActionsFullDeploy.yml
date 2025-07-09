@@ -2,13 +2,10 @@
 
 name: Full IoT Solution Deployment
 
+# Automatically builds and pushes to environment on checkin (CI/CD)
 on:
-  workflow_dispatch:  # Manual trigger from GitHub UI
-
-# Change to this after debugging...
-# on:
-#   push:
-#     branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
   deploy-solution:
@@ -92,8 +89,8 @@ jobs:
           echo "IOT_HUB_NAME=$IOT_HUB_NAME_VALUE" >> "$GITHUB_OUTPUT"
           echo "DATABRICKS_JOB_ID=$DATABRICKS_JOB_ID_VALUE" >> "$GITHUB_OUTPUT"
           echo "DATABRICKS_WORKSPACE_URL=$DATABRICKS_WORKSPACE_URL_VALUE" >> "$GITHUB_OUTPUT"
-
           echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER_VALUE" >> "$GITHUB_OUTPUT"
+
           echo "AKS_KUBECFG<<EOF" >> "$GITHUB_OUTPUT"           # Adapt to kubecfg being multi-line
           echo "$AKS_KUBECFG_VALUE" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
@@ -112,6 +109,7 @@ jobs:
           echo "--- Debug Two End ---"
         working-directory: ./terraform
 
+      # --- 3. Get IoT device connection string ---
       - name: Get IoT device connection string via Azure CLI
         id: get_conn_str # ID for this step to retrieve its output later
         run: |
@@ -135,7 +133,7 @@ jobs:
 
           echo "IOTHUB_DEVICE_CONNECTION_STRING=$conn_str" >> "$GITHUB_OUTPUT"
 
-      # --- CONSOLIDATED STEP: Setup Kubeconfig and Verify AKS Connectivity ---
+      # --- 4. Setup Kubeconfig and Verify AKS Connectivity ---
       - name: Configure Kubectl and Verify AKS Connectivity
         run: |
           # Define a clear, consistent path for the kubeconfig file within the workspace.
@@ -163,7 +161,7 @@ jobs:
           kubectl get nodes --kubeconfig "$KUBECONFIG_PATH" # Explicitly use the kubeconfig path
           echo "--- Debug Four End ---"
 
-      # --- 3. Docker Image Build and Push ---
+      # --- 5. Docker Image Build and Push ---
       - name: Log in to Azure Container Registry
         uses: azure/docker-login@v1
         with:
@@ -221,6 +219,7 @@ jobs:
           kubectl get pods -l app=iot-simulator --kubeconfig "$KUBECONFIG_PATH"
           kubectl get deployments iot-simulator --kubeconfig "$KUBECONFIG_PATH"
 
+      # --- 6. Install Databricks CLI
       - name: Install New Databricks CLI
         run: |
           curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | bash
@@ -245,21 +244,4 @@ jobs:
           
           # Use the new CLI command syntax (job ID as positional argument)
           databricks jobs run-now ${{ steps.terraform_outputs.outputs.DATABRICKS_JOB_ID }}
-
-      - name: Capture IoT Dashboard URL
-        id: dashboard_output
-        run: |
-          DASHBOARD_URL=$(terraform output -raw iot_dashboard_url)
-          echo "IOT_DASHBOARD_URL=$DASHBOARD_URL" >> "$GITHUB_ENV"
-          echo "📊 Dashboard URL: $DASHBOARD_URL"
-
-      - name: Write Dashboard URL to GitHub Actions summary
-        run: |
-          {
-            echo "### 🚀 IoT Monitoring Deployment Complete"
-            echo ""
-            echo "**Grafana Dashboard URL:**"
-            echo ""
-            echo "[$IOT_DASHBOARD_URL]($IOT_DASHBOARD_URL)"
-          } >> $GITHUB_STEP_SUMMARY
            
