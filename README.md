@@ -1,3 +1,4 @@
+# azure-iot-location-monitoring/README.md
 
 ```markdown
 # Azure IoT Location Monitoring
@@ -22,7 +23,8 @@ The solution follows a clear data flow for location telemetry:
 
 `IoT_Device -> IoT_Hub -> Event_Hub -> Databricks -> Cosmos_DB -> Grafana`
 
-![Architecture Diagram](./Architecture.jpg)
+![Architecture Diagram](./main/Architecture.jpg)
+![Architecture Diagram](https://raw.githubusercontent.com/garymichaelbass/azure-iot-location-monitoring/main/Architecture.jpg)
 
 ## Project Structure
 
