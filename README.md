@@ -8,7 +8,7 @@ It enables the collection, processing, and tracking of location data from an IoT
 
 The solution follows a streamlined workflow:
 
-1. **IoT Devices**: Collect and transmit location data.
+1. **IoT Device**: CollectS and transmitS location data.
 2. **IoT Hub**: Manages device communication and ingests telemetry data.
 3. **Event Hub**: Buffers and transports device telemetry messages.
 4. **Databricks**: Processes and analyzes the incoming data streams.
@@ -225,6 +225,10 @@ It's often a good idea to perform an initial `terraform apply` locally to ensure
    - Refer to `README_databricks.md` for detailed instructions on setting up Databricks to process and analyze the data.
 
 4. **Set Up Grafana Dashboards**:
+
+## 🔎 Grafana Dashboard Access
+
+   - For reference, see the dashboard at https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com/dashboards
    - Access Grafana through the Azure portal.
    - Import the provided dashboards to visualize the telemetry data.
    - From the terraform directory, execute "terraform outputs" and go to the grafana_endpoint
