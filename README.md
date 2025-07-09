@@ -23,12 +23,15 @@ The solution follows a clear data flow for location telemetry:
 
 `IoT_Device -> IoT_Hub -> Event_Hub -> Databricks -> Cosmos_DB -> Grafana`
 
+```
 ![Architecture Diagram](./main/Architecture.jpg)
 ![Architecture Diagram](https://raw.githubusercontent.com/garymichaelbass/azure-iot-location-monitoring/main/Architecture.jpg)
 ![Architecture Diagram](https://raw.githubusercontent.com/garymichaelbass/azure-iot-location-monitoring/main/Architecture.jpg)
 
 `Try Four GMB delete later`
 https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/Architecture.jpg 
+
+```markdown
 
 ## Project Structure
 
