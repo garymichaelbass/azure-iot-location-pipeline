@@ -1,8 +1,30 @@
-import base64
-eventhub_connection_string_base64 = dbutils.widgets.get("eventhub_connection_string_base64").strip()
-eventhub_connection_string_decoded = base64.b64decode(eventhub_connection_string_base64).decode("utf-8")
+// terraform/terraform.tfvars.json (DO NOT COMMIT THIS FILE TO GIT!)
+{
+  // --- Azure Resource Naming & Location ---
+  "unique_suffix": "YOUR_UNIQUE_SUFFIX", // A short, unique string (e.g., your initials + a number) to ensure global uniqueness for resources like Storage Accounts.
+  "location": "YOUR_AZURE_REGION",      // The Azure region for resource deployment (e.g., "eastus2", "westeurope").
+  "owner": "YOUR_NAME",                  // Your name or team for resource tagging.
 
-ehConf = {
-    "eventhubs.connectionString": eventhub_connection_string_decoded,
-    "shouldEncryptConnectionString": "false"
+  // --- Terraform Variables for Azure Authentication (Service Principal) ---
+  // These credentials are used by Terraform to authenticate with your Azure subscription
+  // and are directly mapped to Terraform variables in variables.tf.
+  // Obtain these by running: az ad sp create-for-rbac --name "your-sp-name" --role contributor --scopes /subscriptions/<YOUR_SUBSCRIPTION_ID> --json-auth
+  "azure_client_id": "YOUR_SERVICE_PRINCIPAL_CLIENT_ID",
+  "azure_client_secret": "YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET",
+  "azure_subscription_id": "YOUR_AZURE_SUBSCRIPTION_ID",
+  "azure_tenant_id": "YOUR_AZURE_TENANT_ID",
+
+  // --- Other Solution-Specific Variables ---
+  // These values define default settings for your IoT solution resources.
+  "iot_device_name": "truck-001",
+  "aks_node_count": 3,
+  "aks_node_vm_size": "Standard_DS2_v2",
+  "prefix": "iot",
+  "environment": "dev",
+  "project": "iot-simulator",
+
+  // --- Grafana Admin User (Azure AD Object ID) ---
+  // The Azure AD Object ID of the user who will be granted Grafana Admin permissions.
+  // To get your user object ID: az ad signed-in-user show --query id --output tsv
+  "grafana_admin_principal_id": "YOUR_AZURE_USER_OBJECT_ID"
 }

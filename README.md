@@ -21,7 +21,6 @@ The solution follows a clear data flow for location telemetry:
 
 `IoT_Device -> IoT_Hub -> Event_Hub -> Databricks -> Cosmos_DB -> Grafana`
 
-
 ![Architecture Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/Architecture.jpg)
 
 
@@ -117,9 +116,13 @@ Before deploying this solution, ensure you have the following:
 - **GitHub Account:** With a personal access token (PAT) to perform `gh` CLI commands.
 - **Git:** Installed.
 - **Terraform**: Install Terraform to manage infrastructure.
+- **Terraform Backend:** Azure Blob storage for Terraform state file, as referenced in azure-iot-location-monitorying/backend.tf.
+- **Terraform terraform.tfvars.json:** Azure Blob storage for Terraform state file, as referenced in azure-iot-location-monitorying/backend.tf.
 - **Docker**: Required for containerizing the IoT simulator.
 - **Kubernetes Cluster**: Set up a Kubernetes cluster for deploying the simulator.
 - **jq:** A lightweight and flexible command-line JSON processor.
+
+
 
 ## Deployment Guide
 
