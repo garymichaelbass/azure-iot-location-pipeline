@@ -63,14 +63,3 @@ resource "azurerm_role_assignment" "grafana_monitor_reader_cosmosdb" {
   role_definition_name = "Monitoring Reader"
   principal_id         = azurerm_dashboard_grafana.iot_grafana.identity[0].principal_id
 }
-
-# GMB delete later
-# resource "azurerm_grafana_dashboard" "example" {
-#   name       = "grafana-iot-usage"
-#   grafana_id = azurerm_dashboard_grafana.iot_grafana.id
-#   config_json = file("${path.module}/dashboards/iotdashboard.json")
-# }
-
-resource "grafana_dashboard" "iot_dashboard" {
-  config_json = file("${path.module}/dashboards/iotdashboard.json")
-}
