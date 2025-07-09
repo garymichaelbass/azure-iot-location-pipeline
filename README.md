@@ -1,6 +1,6 @@
 # azure-iot-location-monitoring/README.md
 
-```markdown
+# ```markdown
 # Azure IoT Location Monitoring
 
 This project implements a comprehensive IoT solution for real-time location monitoring using Azure services. 
@@ -23,53 +23,53 @@ The solution follows a clear data flow for location telemetry:
 
 `IoT_Device -> IoT_Hub -> Event_Hub -> Databricks -> Cosmos_DB -> Grafana`
 
-```
+# ```
 ![Architecture Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/Architecture.jpg)
-```markdown
+# ```markdown
 
 ## Project Structure
 
 The repository is organized as follows:
 
 
-+-- .github/                           # GitHub Actions workflows for CI/CD
++-- .github/                            # GitHub Actions workflows for CI/CD
 ¦   +-- workflows/
-¦       +-- GithubActionsDestroy.yml   # Main CI/CD pipeline for infrastructure Terraform destroy of the current environment
+¦       +-- GithubActionsDestroy.yml    # Main CI/CD pipeline for infrastructure Terraform destroy of the current environment
 ¦       +-- GithubActionsFullDeploy.yml # Main CI/CD pipeline for infrastructure deployment and application updates
-+-- Architecture.jpg#                    High-level system architecture diagram
-+-- azure-creds.json                   # Service Principal credentials (IGNORED by Git, used by CI/CD and local setup)
-+-- azure-creds.json.template#           Template for azure-creds.json
-+-- CONTRIBUTING.md#                     Guidelines for external contributors
-+-- LICENSE#                             Project LICENSE
-+-- README.md#                           This main Project README
-+-- iot-simulator/                     # Source code for the IoT device simulator (Python, Dockerfile)
-¦   +-- device_simulator.py            # The core device simulation logic
-¦   +-- Dockerfile                     # Dockerfile for containerizing the simulator
-¦   +-- requirements.txt               # Python dependencies for the simulator
-+-- kubernetes/                        # Kubernetes manifests for deploying the simulator to AKS
-¦   +-- simulator-deployment.yaml      # Kubernetes deployment and service definitions for the simulator
-+-- terraform/                         # Terraform configuration files for Azure infrastructure deployment
-¦   +-- aks.tf                         # Azure Kubernetes Service (AKS) cluster definition
-¦   +-- backend.tf                     # Remote backend configuration for shared tfstate
-¦   +-- main.tf                        # Core Azure resources (IoT Hub, Event Hub, Cosmos DB, Azure Container Registry)
-¦   +-- modules.tf                     # Terraform module definitions (e.g., for Databricks, Monitoring)
-¦   +-- outputs.tf                     # Terraform outputs for deployed resource information
-¦   +-- providers.tf                   # Terraform provider configurations (AzureRM, Databricks, Grafana)
-¦   +-- variables.tf                   # Terraform input variables for customization
-¦   +-- terraform.tfvars.json          # Local variables file (IGNORED by Git, for local development)
-¦   +-- modules/                       # Reusable Terraform modules
-¦       +-- databricks/                # Databricks cluster and notebook provisioning
-¦       ¦   +-- main.tf                # Databricks module main configuration
-¦       ¦   +-- notebook.py            # Databricks notebook for data processing
-¦       ¦   +-- outputs.tf             # Databricks module outputs
-¦       ¦   +-- providers.tf           # Databricks module provider configurations
-¦       ¦   +-- variables.tf           # Databricks module input variables
-¦       +-- monitoring/                # Monitoring stack: Azure Monitor, Grafana, Alerts
-¦           +-- dashboards/            # Placeholder or actual Grafana dashboard JSON files
-¦           +-- main.tf                # Monitoring module main configuration (e.g., Grafana, Azure Monitor)
-¦           +-- outputs.tf             # Monitoring module outputs
-¦           +-- variables.tf           # Monitoring module input variables
-+-- Screenshots/                       # Directory for project screenshots and visualizations (NEW)
++-- Architecture.jpg                    # High-level system architecture diagram
++-- azure-creds.json                    # Service Principal credentials (IGNORED by Git, used by CI/CD and local setup)
++-- azure-creds.json.template           # Template for azure-creds.json
++-- CONTRIBUTING.md                     # Guidelines for external contributors
++-- LICENSE                             # Project LICENSE
++-- README.md                           # This main Project README
++-- iot-simulator/                      # Source code for the IoT device simulator (Python, Dockerfile)
+¦   +-- device_simulator.py             # The core device simulation logic
+¦   +-- Dockerfile                      # Dockerfile for containerizing the simulator
+¦   +-- requirements.txt                # Python dependencies for the simulator
++-- kubernetes/                         # Kubernetes manifests for deploying the simulator to AKS
+¦   +-- simulator-deployment.yaml       # Kubernetes deployment and service definitions for the simulator
++-- terraform/                          # Terraform configuration files for Azure infrastructure deployment
+¦   +-- aks.tf                          # Azure Kubernetes Service (AKS) cluster definition
+¦   +-- backend.tf                      # Remote backend configuration for shared tfstate
+¦   +-- main.tf                         # Core Azure resources (IoT Hub, Event Hub, Cosmos DB, Azure Container Registry)
+¦   +-- modules.tf                      # Terraform module definitions (e.g., for Databricks, Monitoring)
+¦   +-- outputs.tf                      # Terraform outputs for deployed resource information
+¦   +-- providers.tf                    # Terraform provider configurations (AzureRM, Databricks, Grafana)
+¦   +-- variables.tf                    # Terraform input variables for customization
+¦   +-- terraform.tfvars.json           # Local variables file (IGNORED by Git, for local development)
+¦   +-- modules/                        # Reusable Terraform modules
+¦       +-- databricks/                 # Databricks cluster and notebook provisioning
+¦       ¦   +-- main.tf                 # Databricks module main configuration
+¦       ¦   +-- notebook.py             # Databricks notebook for data processing
+¦       ¦   +-- outputs.tf              # Databricks module outputs
+¦       ¦   +-- providers.tf            # Databricks module provider configurations
+¦       ¦   +-- variables.tf            # Databricks module input variables
+¦       +-- monitoring/                 # Monitoring stack: Azure Monitor, Grafana, Alerts
+¦           +-- dashboards/             # Placeholder or actual Grafana dashboard JSON files
+¦           +-- main.tf                 # Monitoring module main configuration (e.g., Grafana, Azure Monitor)
+¦           +-- outputs.tf              # Monitoring module outputs
+¦           +-- variables.tf            # Monitoring module input variables
++-- Screenshots/                        # Directory for project screenshots and visualizations (NEW)
 ¦   +-- 20250708_01_IoTHub_Activity.jpg
 ¦   +-- 20250708_02_IoTHub_TelemetryInAndOut.jpg
 ¦   +-- 20250708_03_EventHub_OutgoingBytes.jpg
