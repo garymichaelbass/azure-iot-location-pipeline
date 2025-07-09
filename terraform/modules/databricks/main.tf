@@ -12,7 +12,6 @@ data "databricks_spark_version" "latest_lts" {
 
 # Provisions a Databricks cluster using the LTS Spark version and smallest node type
 resource "databricks_cluster" "iot_cluster" {
-  # cluster_name            = "iot-location-cluster"
   cluster_name            = "iot-dbx-cluster"
   spark_version           = "16.4.x-scala2.12"
   node_type_id            = "Standard_DS3_v2"
@@ -21,17 +20,19 @@ resource "databricks_cluster" "iot_cluster" {
 
   library {
     maven {
-      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22"  # GMB 20250702 Refresh for Spark 16.4.x-scala2.12
+      coordinates = "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22" 
     }
   }
 
   library {
     maven {
-      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-5_2-12:4.37.2"  # GMB 20250702 Refresh for Spark 16.4.x-scala2.12
+      coordinates = "com.azure.cosmos.spark:azure-cosmos-spark_3-5_2-12:4.37.2"
     }
   }
 
-  # (Optional: Add any spark_conf here if you pass sensitive keys via spark.conf.get)
+  # (Optional) Use spark_conf to inject secrets into the Spark runtime.
+  # Recommended only if you're not using Databricks Secret Scopes.
+  #
   # spark_conf = {
   #   "spark.databricks.io.eventhubs.connectionString" = var.eventhub_connection_string
   #   "spark.databricks.io.cosmos_db_endpoint"         = var.cosmos_db_endpoint
@@ -60,7 +61,7 @@ resource "databricks_job" "iot_job" {
     notebook_task {
       notebook_path = databricks_notebook.iot_notebook.path
       base_parameters = {
-        device_count              = "100"
+        device_count                           = "100"
         eventhub_connection_string             = var.eventhub_connection_string
         eventhub_connection_string_plus_entity = var.eventhub_connection_string_plus_entity
 

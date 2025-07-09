@@ -71,12 +71,6 @@ resource "azurerm_iothub" "iot_hub" {
     capacity = 1
   }
 
-  # fallback_route {
-  #   enabled         = true
-  #   source          = "DeviceMessages"
-  #   endpoint_names  = ["events"]
-  # }
-
   endpoint {
     type              = "AzureIotHub.EventHub"
     connection_string = azurerm_eventhub_authorization_rule.my_terraform_authorization_rule.primary_connection_string
@@ -109,15 +103,6 @@ resource "azurerm_iothub_shared_access_policy" "iot_hub_connection_policy" {
   service_connect = true
   device_connect  = true
 }
-
-# resource "azurerm_iothub_endpoint_eventhub" "eventhub_endpoint" {
-#   name        = "eventhub-endpoint"
-#   iothub_id   = azurerm_iothub.iot_hub.id
-
-#   eventhub_name     = azurerm_eventhub.iot_eventhub.name
-#   namespace_name    = azurerm_eventhub_namespace.iot_eventhub_ns.name
-#   connection_string = azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string
-# }
 
 # Create an Event Hub instance to buffer and transport device telemetry messages.
 resource "azurerm_eventhub" "iot_eventhub" {

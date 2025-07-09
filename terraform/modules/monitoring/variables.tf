@@ -46,7 +46,6 @@ variable "project" {
 }
 
 # Adding this within the module to grant the user permission to Grafana (defined as AZURE_USER_OBJECT_ID in GitHub Secrets)
-
 variable "grafana_admin_principal_id" {
   description = "The Azure AD Object ID of the user or group to assign Grafana Admin permissions."
   type        = string

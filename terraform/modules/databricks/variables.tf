@@ -17,13 +17,14 @@ variable "cosmos_db_key" {
 #   sensitive   = true
 # }
 
-variable "eventhub_connection_string" {
-  description = "Primary connection string for the Event Hub-compatible endpoint"
-  type        = string
-  sensitive   = true
-}
+# GMB Delete this after verification everything works
+# variable "eventhub_connection_string" {
+#   description = "Primary connection string for the Event Hub-compatible endpoint"
+#   type        = string
+#   sensitive   = true
+# }
 
-variable "eventhub_connection_string_plus_entity" {
+variable "eventhub_connection_string_incl_entity" {
   description = "Primary connection string for the Event Hub-compatible endpoint plus entity"
   type        = string
   sensitive   = true

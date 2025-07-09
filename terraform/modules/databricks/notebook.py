@@ -25,19 +25,22 @@ except NameError:
     dbutils = MockDbutils()
 # --- END dbutils Mock ---
 
-
 # Databricks notebook to read from Event Hub and write to Cosmos DB
 
 # Import necessary types for defining the schema of the incoming data
 from pyspark.sql.types import StructType, StringType, DoubleType, LongType
+
 # Import functions for data transformation, specifically for parsing JSON
 from pyspark.sql.functions import from_json, col, concat_ws
 
-import logging # Import logging module
+# Import logging module
+import logging 
 
-from pyspark.sql import SparkSession # Provides entry point for Spark
+# Provides entry point for Spark
+from pyspark.sql import SparkSession 
 
-from pyspark.sql.streaming import StreamingQueryListener # Provides event handles for stream
+# Provides event handles for stream
+from pyspark.sql.streaming import StreamingQueryListener 
 
 print("🔍 Initializing IoT telemetry pipeline...")
 
@@ -53,21 +56,23 @@ schema = StructType() \
     .add("timestamp", LongType())
 
 # Retrieve parameters
-eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
-eventhub_connection_string_plus_entity = dbutils.widgets.get("eventhub_connection_string_plus_entity")
+# GMB Delete this line after verification everything works
+# eventhub_connection_string = dbutils.widgets.get("eventhub_connection_string")
 
-cosmos_db_endpoint         = dbutils.widgets.get("cosmos_db_endpoint")
-cosmos_db_key              = dbutils.widgets.get("cosmos_db_key")
-cosmos_db_database         = dbutils.widgets.get("cosmos_db_database")
-cosmos_db_container        = dbutils.widgets.get("cosmos_db_container")
+eventhub_connection_string_incl_entity = dbutils.widgets.get("eventhub_connection_string_incl_entity")
 
-print("🔒 eventhub_connection_string_plus_entity (pre-encryption): ", eventhub_connection_string_plus_entity)
+cosmos_db_endpoint                     = dbutils.widgets.get("cosmos_db_endpoint")
+cosmos_db_key                          = dbutils.widgets.get("cosmos_db_key")
+cosmos_db_database                     = dbutils.widgets.get("cosmos_db_database")
+cosmos_db_container                    = dbutils.widgets.get("cosmos_db_container")
+
+print("🔒 eventhub_connection_string_incl_entity (pre-encryption): ", eventhub_connection_string_incl_entity)
 
 # Encrypt using Spark's JVM bridge
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
 sc = spark.sparkContext
-encrypted_connection_string = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(eventhub_connection_string_plus_entity)
+encrypted_connection_string = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(eventhub_connection_string_incl_entity)
 print("🔒 encrypted_connection_string into ehConf: ", encrypted_connection_string)
 
 ehConf = {

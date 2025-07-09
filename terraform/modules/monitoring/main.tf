@@ -31,9 +31,7 @@ resource "azurerm_dashboard_grafana" "iot_grafana" {
     owner       = var.owner
   }
 
-  # GMB Add this in later.
   azure_monitor_workspace_integrations {
-    # CORRECTED: Referencing the ID of the azurerm_monitor_account resource
     resource_id = azurerm_monitor_workspace.iot_monitor_workspace.id
   }
 }

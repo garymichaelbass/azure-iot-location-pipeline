@@ -42,7 +42,7 @@ output "eventhub_connection_string" {
   sensitive   = true # VERY IMPORTANT for security
 }
 
-output "eventhub_connection_string_plus_entity" {
+output "eventhub_connection_string_incl_entity" {
   description = "The Event Hub connection string used by the Databricks pipeline (sensitive)."
   value       = "${azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string};EntityPath=${var.eventhub_instance_name}"
   sensitive   = true # VERY IMPORTANT for security
@@ -70,7 +70,6 @@ output "databricks_job_run_url" {
   value       = "${azurerm_databricks_workspace.iot_databricks_workspace.workspace_url}#job/${module.databricks_iot.databricks_job_id}"
 }
 
-
 output "cosmos_db_endpoint" {
   description = "Database endpoint"
   value = azurerm_cosmosdb_account.iot_cosmosdb_account.endpoint
@@ -95,13 +94,3 @@ output "grafana_resource_id" {
   description = "Azure resource ID of the Grafana instance"
   value = module.monitoring_iot.grafana_resource_id
 }
-
-# output "grafana_endpoint" {
-#   description = "Public endpoint for the Azure Managed Grafana instance"
-#   value       = azurerm_dashboard_grafana.iot_grafana.endpoint
-# }
-
-# output "grafana_resource_id" {
-#   description = "Azure resource ID of the Grafana instance"
-#   value       = azurerm_dashboard_grafana.iot_grafana.id
-# }
