@@ -1,4 +1,4 @@
-# device_simulator.py
+# azure-iot-location-monitoring\iot-simulator\device_simulator.py
 
 # Simulate a GPS-enabled IoT device.
 # Sends randomized location data to Azure IoT Hub at regular intervals.

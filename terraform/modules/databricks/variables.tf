@@ -1,4 +1,4 @@
-# azure-iot-location-monitoring\terraform\modules\databricks\providers.tf
+# azure-iot-location-monitoring\terraform\modules\databricks\variables.tf
 
 variable "cosmos_db_endpoint" {
   description = "Endpoint URI for the Cosmos DB account used for telemetry writes"

@@ -108,26 +108,12 @@ raw_df.selectExpr("cast(body as string) as raw_json").writeStream \
 
 # Parse the raw Event Hub message body, which is a binary string, into a structured JSON format. 
 # NOTE: Also add the required 'id' field
-# json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
-# json_df = json_df.withColumn("id", concat_ws("-", col("deviceId"), col("timestamp")))
 
-# LATEST ADD FROM 20250704  8:47pm
 from pyspark.sql.functions import when, lit
-
 # Parse JSON and handle missing timestamps
 json_df = raw_df.select(from_json(col("body").cast("string"), schema).alias("data")).select("data.*")
 
-# # Replace null timestamps with current time (or a default)
-# json_df = json_df.withColumn(
-#     "timestamp",
-#     when(col("timestamp").isNull(), lit(0)).otherwise(col("timestamp"))
-# )
-
-# # Add a unique ID field
-# json_df = json_df.withColumn("id", concat_ws("-", col("deviceId"), col("timestamp")))
-
 from pyspark.sql.functions import unix_timestamp, when
-
 # Replace null timestamps with current time
 json_df = json_df.withColumn(
     "timestamp",
@@ -187,30 +173,11 @@ json_df.writeStream \
     .option("checkpointLocation", checkpoint_path) \
     .start()
 
-# GMB Using the above section and NOT this section to write to Cosmos
-# # # Write the processed streaming data from `json_df` to Azure Cosmos DB.
-# json_df.writeStream \
-#     .format("cosmos.oltp") \
-#     .options(**cosmos_config) \
-#     .outputMode("append") \
-#     .option("checkpointLocation", checkpoint_path) \
-#     .start()
-
 print(f"✅ Streaming pipeline initialized with checkpoint: {checkpoint_path}. Data is flowing!")
-
-print("✅ Streaming pipeline initialized. Data is flowing! ")
 
 # Surface stats like record volume, throughput, and termination alerts directly into job logs.
 from pyspark.sql.streaming import StreamingQueryListener
-
-# class DebugListener(StreamingQueryListener):
-#     def onQueryStarted(self, event):
-#         print(f"🔄 Query started: {event.name}")
-#     def onQueryProgress(self, event):
-#         print(f"📈 Progress update: {event.progress.numInputRows} rows received")
-#     def onQueryTerminated(self, event):
-#         print(f"💥 Query terminated: {event.id}")
-        
+      
 class DebugListener(StreamingQueryListener):
     def onQueryStarted(self, event):
         print(f"🔄 Query started: {event.name} (ID: {event.id})")

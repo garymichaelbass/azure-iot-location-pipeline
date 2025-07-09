@@ -18,10 +18,3 @@ output "databricks_notebook_path" {
 output "databricks_workspace_url_value" {
   value = var.databricks_workspace_url
 }
-
-# GMB delete this later if everything works
-# output "eventhub_connection_string_incl_entity_module_output" {
-#   description = "The Event Hub connection string (passed into this module)."
-#   value       = var.eventhub_connection_string_incl_entity # Output the variable received by the module
-#   sensitive   = true # VERY IMPORTANT for security
-# }
