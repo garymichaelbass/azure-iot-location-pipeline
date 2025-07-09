@@ -37,10 +37,6 @@ output "iot_hub_connection_string" {
 output "eventhub_namespace" {
   value = azurerm_eventhub_namespace.iot_eventhub_namespace.name
 }
-output "eventhub_connection_string" {
-  value = azurerm_eventhub_namespace_authorization_rule.iot_send_rule.primary_connection_string
-  sensitive   = true # VERY IMPORTANT for security
-}
 
 output "eventhub_connection_string_incl_entity" {
   description = "The Event Hub connection string used by the Databricks pipeline (sensitive)."
