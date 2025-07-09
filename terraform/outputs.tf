@@ -92,5 +92,5 @@ output "grafana_resource_id" {
 }
 
 output "iot_dashboard_url" {
-  value = module.monitoring.iot_dashboard_url
+  value = module.monitoring_iot.iot_dashboard_url
 }
