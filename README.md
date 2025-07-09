@@ -28,7 +28,7 @@ The solution follows a clear data flow for location telemetry:
 ![Architecture Diagram](https://raw.githubusercontent.com/garymichaelbass/azure-iot-location-monitoring/main/Architecture.jpg)
 
 `Try Four GMB delete later`
-https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/Architecture.jpg\
+https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/Architecture.jpg 
 
 ## Project Structure
 
