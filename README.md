@@ -162,38 +162,84 @@ Your GitHub Actions workflow requires the Service Principal credentials to be st
 
 ### 4\. Terraform Configuration (`terraform.tfvars.json`)
 
+Generate AZURE_CREDENTIALS as follows:
+
+```bash
+az ad sp create-for-rbac --name "github-iot-acr-pusher" --role "User Access Administrator"  --scopes /subscriptions/<your-subscription-id> --sdk-auth > azure-creds.json
+gh auth login
+gh secret set AZURE_CREDENTIALS < azure-creds.json
+```
+
+Generate DATABRICKS_PAT_TOKEN as follows:
+
+1.	Go to your Databricks workspace
+Open: https://adb-XXXXXXXXXXXXXXXX.14.azuredatabricks.net
+2.	Click your user icon in the top right
+→ Select Settings
+3.	In the left click Developer tab:
+→ To right of "Access tokens" at the top, click Manage
+4.	Click "Generate new token."
+5.	Add a name ("GitHubActionsToken") and set expiration to "365" days.
+→ Click Generate.
+6.	Copy the token immediately and save it somewhere safe—it’s only shown once.
+
+7.	Go to your GitHub repo
+→ Click Settings → Secrets and variables → Actions
+8.	Under Repository secrets, click New repository secret
+9.	Name it:
+DATABRICKS_PAT_TOKEN 
+10.	Paste the PAT you copied from Databricks
+11.	Click Add secret
+From there, your GitHub Actions workflow will be able to use:
+
+```yaml
+env: 
+DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }} 
+```
+
 Customize your Azure resource names and locations by creating a `terraform.tfvars.json` file in the `terraform/` directory. This file is ignored by Git, so it's safe for local values. Feel free to use the `terraform/terraform.tfvars.json.template` as a reference.
 
-Create `terraform/terraform.tfvars.json`:
+Create `terraform/terraform.tfvars.json` (see terraform.tfvars.json_TEMPLATE):
 
 ```json
 {
-  "resource_group_name": "iot-location-rg-<YOUR_UNIQUE_SUFFIX>",
-  "location": "<YOUR-REGION-SUCH-AS-EASTUS2>",
-  "iot_hub_name": "iotlocationhub-<YOUR_UNIQUE_SUFFIX>",
+  "azure_client_id": "YOUR_SERVICE_PRINCIPAL_CLIENT_ID",
+  "azure_client_secret": "YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET",
+  "azure_subscription_id": "YOUR_AZURE_SUBSCRIPTION_ID",
+  "azure_tenant_id": "YOUR_AZURE_TENANT_ID",
+
+  "grafana_admin_principal_id": "YOUR_AZURE_USER_OBJECT_ID",
+
+  "resource_group_name": "iot-location-rg-<your-unique-suffix>",
+  "location": "<azure-region>",
+
+  "iot_hub_name": "iotlocationhub-<your-unique-suffix>",
   "iot_device_name": "truck-001",
-  "cosmos_db_name": "iotcosmosdb-<YOUR_UNIQUE_SUFFIX>",
-  "acr_name": "youracrname-<YOUR_UNIQUE_SUFFIX>",
+  "cosmos_db_name": "iotcosmosdb-<your-unique-suffix>",
+  "acr_name": "youracrname-<your-unique-suffix>",
+
   "aks_node_count": 3,
   "aks_node_vm_size": "Standard_DS2_v2",
   "prefix": "iot",
   "environment": "dev",
   "project": "iot-simulator",
-  "owner": "<YOUR-NAME>",
-  "github_client_id": "<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>"
+   "owner": "<your-name>"
 }
 ```
 
-**Remember to replace all placeholders `<YOUR_UNIQUE_SUFFIX>`, `<YOUR_AZURE_SUBSCRIPTION_ID>`, and `<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>` with your actual values.**
+**Remember to replace all placeholders such as  `<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>`, `<YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET>`, `<YOUR_AZURE_SUBSCRIPTION_ID>`, `<YOUR_AZURE_TENANT_ID>`, and `<YOUR_AZURE_USER_OBJECT_ID>` with your actual values.**
 
-For appopriate permissions allowing GitHub to access Azure, add the following four Repository secrets via Settings -> Secrets and variables -> Actions. Please note, when enterring these into GitHub, omit the beginning and ending double-quotes from the value.
+For appopriate permissions allowing GitHub to access Azure, add the following Repository secrets via Settings -> Secrets and variables -> Actions. Please note, when enterring these into GitHub, omit the beginning and ending double-quotes from the value.
 
 - AZURE_CLIENT_ID
 - AZURE_CLIENT_SECRET
 - AZURE_SUBSCRIPTION_ID
 - AZURE_TENANT_ID
+- AZURE_USER_OBJECT_ID
 
-Customize your Azure resource names and locations by creating a `terraform.tfvars.json` file in the `terraform/` directory. This file is ignored by Git, so it's safe for local values. Feel free to use the `terraform/terraform.tfvars.json.template` as a reference.
+- AZURE_CREDENTIALS
+- DATABRICKS_TOKEN
+
 
 ### 5\. Initial Terraform Apply (Local - Optional but Recommended)
 
@@ -227,31 +273,30 @@ It's often a good idea to perform an initial `terraform apply` locally to ensure
 3. **Configure Databricks**:
    - Refer to `README_databricks.md` for detailed instructions on setting up Databricks to process and analyze the data.
 
-4. **Set Up Grafana Dashboards**:
-
-## 🔎 Grafana Dashboard Access
+4. **Set Up Grafana Sample Dashboard**:
 
    - For reference, see the dashboard at https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com/dashboards
-   - Access Grafana through the Azure portal.
-   - Import the provided dashboards to visualize the telemetry data.
-   - From the terraform directory, execute "terraform outputs" and go to the grafana_endpoint
-              EXAMPLE: https://iot-grafana-XXXXXXXXXXXXXXX.eus2.grafana.azure.com
+
+   - From the Github Actions deployment under "Get Terraform Outputs", get the "grafana_endpoint (ie, https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com).
   - In Grafana, go the left frame, click "Connections" and in the right click "Azure Monitor."
   - In the upper right, click "Add new data source."
-  - Under Authentication, click "Load Subscriptions" then select your subscription.
+  - Under Authentication, with Authentication set to "Managed Identity", click "Load Subscriptions" then select your subscription.
   - Click "Save & test."
   - Note confirmation message of "Successfully connected to all Azure Monitor endpoints."
-  - In the top right corner, click "Explore data."
-  - In the "Service" dropdown, select "Logs".
-  - Click "Select a resource" and fill in the subscription and search for "iot-log" then click "Apply."
-  - In the query box, enter the following:
-  AzureDiagnostics
-        | where ResourceType == "IOTHUBS"
-        | where Category == "DeviceTelemetry"
-        | where TimeGenerated > ago(30m)
-        | summarize count() by bin(TimeGenerated, 5m), DeviceId_s
 
+  - In the left panel, click on Dashboards.
+  - In the upper right, drop down the blue "New" icon and select "New dashboard."
+  - Click "+ Add visualization."
+  - Select data source, choose "Azure Monitor."
+  - In the lower left, in the Resource/"Select a resource" block, click "Select a resource."
+  - It the "search for a resource" box, enter "iot-".
+  - Click the checkbox for "iot-cosmos-account-gmb" then click "Apply."
+  - In the Metric dropdown, click "Data Usage." In the Aggregation select "Total." Time grain "5 minutes."
+  - Click the upper right "Apply."  In the upper right, click "Last 6 hours" and change it to "Last one hour".
+  - In the upper right click "Save". Assign a Title and Description of "Sample CosmosDB Usage". Click the blue "Save."
+  - Shazam! You now have a sample Grafana dashboard.
 
+![Sample Grafana Dashboard Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/20250708_12_Grafana_Sample_CosmosDB_Data_Usage.jpg)
 
 
 ## Usage
