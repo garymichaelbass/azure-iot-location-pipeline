@@ -96,22 +96,22 @@ variable "acr_name" {
   default     = "AzureIotLocationMonitoringRegistry"
 }
 
-variable "github_client_id" {
+variable "azure_client_id" {
   description = "The client ID (application ID) of the GitHub Actions service principal"
   type        = string
 }
 
-variable "github_client_secret" {
+variable "azure_client_secret" {
   description = "The client secret associated with the GitHub Actions service principal"
   type        = string
 }
 
-variable "github_tenant_id" {
+variable "azure_tenant_id" {
   description = "The Azure Active Directory tenant ID where the service principal resides"
   type        = string
 }
 
-variable "github_subscription_id" {
+variable "azure_subscription_id" {
   description = "The Azure subscription ID the service principal has access to"
   type        = string
 }

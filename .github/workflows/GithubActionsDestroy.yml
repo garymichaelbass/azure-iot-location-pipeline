@@ -44,10 +44,10 @@ jobs:
           # Define the terraform destroy command as a shell array on a single line.
           # Populate the variables per the GitHub secrets.
           DESTROY_COMMAND=(terraform destroy -auto-approve \
-            -var="github_client_id=${{ secrets.AZURE_CLIENT_ID }}" \
-            -var="github_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
-            -var="github_tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
-            -var="github_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            -var="azure_client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -var="azure_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+            -var="azure_tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
+            -var="azure_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
             -var="grafana_admin_principal_id=${{ secrets.AZURE_USER_OBJECT_ID }}")
 
           echo "Attempting initial terraform destroy..."
