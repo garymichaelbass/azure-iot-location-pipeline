@@ -41,7 +41,7 @@ resource "databricks_cluster" "iot_cluster" {
 
 }
 
-# Upload a Python notebook (notebook.py) to read from Event Hub and write to Cosmos DB.
+# Upload a Python notebook (notebook.py) to read from Event Hub and write to Cosmos DB. 
 resource "databricks_notebook" "iot_notebook" {
   # Location for uploaded notebook inside of the Databricks workspace
   # https://<your-databricks-url>#workspace/Shared/iot-location-notebook
