@@ -166,13 +166,13 @@ Create `terraform/terraform.tfvars.json`:
   "iot_hub_name": "iotlocationhub-<YOUR_UNIQUE_SUFFIX>",
   "iot_device_name": "truck-001",
   "cosmos_db_name": "iotcosmosdb-<YOUR_UNIQUE_SUFFIX>",
-  "acr_name": "youracrname<YOUR_UNIQUE_SUFFIX>",
+  "acr_name": "youracrname-<YOUR_UNIQUE_SUFFIX>",
   "aks_node_count": 3,
   "aks_node_vm_size": "Standard_DS2_v2",
   "prefix": "iot",
   "environment": "dev",
   "project": "iot-simulator",
-  "owner": "your-name",
+  "owner": "<YOUR-NAME>",
   "github_client_id": "<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>" # The 'clientId' from azure-creds.json
 }
 ```
