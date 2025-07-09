@@ -31,7 +31,7 @@ The solution follows a clear data flow for location telemetry:
 
 The repository is organized as follows:
 
-```text
+
 +-- .github/                           # GitHub Actions workflows for CI/CD
 ¦   +-- workflows/
 ¦       +-- GithubActionsDestroy.yml   # Main CI/CD pipeline for infrastructure Terraform destroy of the current environment
