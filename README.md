@@ -1,4 +1,3 @@
-# azure-iot-location-monitoring/README.md
 
 # Azure IoT Location Monitoring
 
@@ -167,7 +166,7 @@ Create `terraform/terraform.tfvars.json`:
 ```json
 {
   "resource_group_name": "iot-location-rg-<YOUR_UNIQUE_SUFFIX>",
-  "location": "eastus2", # Or your preferred Azure region
+  "location": "<YOUR-REGION-SUCH-AS-EASTUS2>",
   "iot_hub_name": "iotlocationhub-<YOUR_UNIQUE_SUFFIX>",
   "iot_device_name": "truck-001",
   "cosmos_db_name": "iotcosmosdb-<YOUR_UNIQUE_SUFFIX>",
@@ -178,7 +177,7 @@ Create `terraform/terraform.tfvars.json`:
   "environment": "dev",
   "project": "iot-simulator",
   "owner": "<YOUR-NAME>",
-  "github_client_id": "<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>" # The 'clientId' from azure-creds.json
+  "github_client_id": "<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>"
 }
 ```
 
