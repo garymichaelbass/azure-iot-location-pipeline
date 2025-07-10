@@ -136,7 +136,7 @@ See the screenshots directory (./screenshots) for sample images of IoTHub, Event
 The deployment is primarily automated via GitHub Actions. However, some initial setup is required.
 
 
-    - **Step 1\. Clone the Repository**
+  - **Step 1\. Clone the Repository**
 
     Clone this repository to your local machine:
 
@@ -146,7 +146,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     ```
 
 
-    - **Step 2\. Azure Service Principal Setup**
+  - **Step 2\. Azure Service Principal Setup**
 
     Your GitHub Actions workflow will use an Azure Service Principal (SP) to authenticate and deploy resources.
 
@@ -159,7 +159,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     **Important:** The `azure-creds.json` file contains sensitive credentials. Include it in your `.gitignore`. **Do NOT commit this file to your Git repository.**
 
 
-    - **Step 3\. Databricks Token Setup**
+  - **Step 3\. Databricks Token Setup**
 
     Generate DATABRICKS_PAT_TOKEN as follows:
 
@@ -175,7 +175,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     6.	Copy the token immediately and save it somewhere safe—it’s only shown once.
 
 
-    - **Step 4\. Terraform Configuration (`terraform.tfvars.json`)**
+  - **Step 4\. Terraform Configuration (`terraform.tfvars.json`)**
 
     Customize your Azure resource names and locations by creating a `terraform.tfvars.json` file in the `terraform/` directory. This file is ignored by Git, so it's safe for local values. Feel free to use the `terraform/terraform.tfvars.json.template` as a reference.
 
@@ -208,7 +208,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     **Remember to replace all placeholders such as  `<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>`, `<YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET>`, `<YOUR_AZURE_SUBSCRIPTION_ID>`, `<YOUR_AZURE_TENANT_ID>`, and `<YOUR_AZURE_USER_OBJECT_ID>` with your actual values.**
 
 
-    - **Step 5\. GitHub Secrets Configuration - DATABRICKS_PAT_TOKEN and AZURE_CREDENTIALS
+  - **Step 5\. GitHub Secrets Configuration - DATABRICKS_PAT_TOKEN and AZURE_CREDENTIALS
 
     Since your `terraform.tfvars.json` file is not uploaded into Github, Github requires access to the following via Github Secrets. 
 
@@ -239,7 +239,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }} 
     ```
 
-    - **Step 6. Initial Terraform Apply (Local - Optional but Recommended)**
+  - **Step 6. Initial Terraform Apply (Local - Optional but Recommended)**
 
     It's often a good idea to perform an initial `terraform apply` locally to ensure all providers are correctly configured and to handle any one-time issues (like importing existing resources or the two-phase Databricks deployment).
 
@@ -272,7 +272,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
           - Refer to `README_databricks.md` for detailed instructions on setting up Databricks to process and analyze the data.
 
 
-    - **Step 7. Github Actions Deployment**
+  - **Step 7. Github Actions Deployment**
 
     Push the code to your own repository as follows:
     1.  Create your own Git repository as follows:
@@ -285,7 +285,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
       - In the Github repository, select "Actions." Select "Full IoT Solutions Deployment." Select "Deploy."
 
 
-    - **Step 8. Grafana Dashboard Setup**
+  - **Step 8. Grafana Dashboard Setup**
 
       - For reference, see the dashboard at https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com/dashboards
 
@@ -311,7 +311,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     ![Sample Grafana Dashboard Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/screenshots/20250708_12_Grafana_Sample_CosmosDB_Data_Usage.jpg)
 
 
-    - **Step 9. Usage**
+  - **Step 9. Usage**
 
     Once the infrastructure is deployed and the simulator is running, the system will:
 
@@ -321,7 +321,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     - Grafana provides real-time dashboards for monitoring and analysis.
 
 
-    - **Step 10. Cleaning Up Resources**
+  - **Step 10. Cleaning Up Resources**
 
     To destroy all deployed Azure resources (and avoid incurring further costs):
 
