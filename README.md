@@ -2,23 +2,23 @@
 # Azure IoT Location Monitoring
 
 This project implements a comprehensive IoT solution for real-time location monitoring using Azure services. 
-It enables the collection, processing, and tracking of GPS location data from an IoT device.
+It enables the generation, collection, processing, and tracking of GPS location data from an IoT device.
 
 ## Architecture Overview
 
 The solution follows a streamlined workflow:
 
-1. **IoT Device**: Collects and transmits location data (simulated via a Kubernetes Deployment of a Docker container running a Python app).
-    * Simulated via a Kubernetes Deployment of a Docker container running a Python app.
+1. **IoT Device**: Collects and transmits location data.
+    * _Simulated via a Kubernetes Deployment of a Docker container running a Python app_.
 2. **IoT Hub**: Manages device communication and ingests telemetry data.
 3. **Event Hub**: Buffers and transports device telemetry messages.
 4. **Databricks**: Processes and analyzes the incoming data streams.
 5. **Cosmos DB**: Stores processed data for scalable and low-latency access.
-6. **Grafana**: Visualizes data through interactive dashboards.
+6. **Grafana**: Visualizes data through dashboards.
 
 ## Data Flow
 
-The solution follows a clear data flow for location telemetry:
+The following is the data flow for location telemetry:
 
 `IoT_Device -> IoT_Hub -> Event_Hub -> Databricks -> Cosmos_DB -> Grafana`
 
@@ -32,16 +32,16 @@ The repository is organized as follows:
 ```markdown
 
 +-- .github/                            # GitHub Actions workflows for CI/CD
-¦   +-- workflows/
-¦       +-- GithubActionsDestroy.yml    # Main CI/CD pipeline for infrastructure Terraform destroy of the current environment
-¦       +-- GithubActionsFullDeploy.yml # Main CI/CD pipeline for infrastructure deployment and application updates
+¦   +-- workflows/                      # Infrastucture-As-Code deployment stack for CI/CD workflows
+¦       +-- GithubActionsDestroy.yml    # Main CI/CD pipeline for infrastructure Terraform destroy of the current solution
+¦       +-- GithubActionsFullDeploy.yml # Main CI/CD pipeline for infrastructure Terraform deployment and application updates
 +-- Architecture.jpg                    # High-level system architecture diagram
 +-- azure-creds.json                    # Service Principal credentials (IGNORED by Git, used by CI/CD and local setup)
 +-- azure-creds.json.template           # Template for azure-creds.json
 +-- CONTRIBUTING.md                     # Guidelines for external contributors
 +-- LICENSE                             # Project LICENSE
-+-- README.md                           # This main Project README
-+-- README_databricks.md                # READ for Databricks
++-- README.md                           # Main Project README
++-- README_databricks.md                # README for Databricks
 +-- iot-simulator/                      # Source code for the IoT device simulator (Python, Dockerfile)
 ¦   +-- device_simulator.py             # The core device simulation logic
 ¦   +-- Dockerfile                      # Dockerfile for containerizing the simulator
