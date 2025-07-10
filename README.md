@@ -9,6 +9,7 @@ It enables the collection, processing, and tracking of GPS location data from an
 The solution follows a streamlined workflow:
 
 1. **IoT Device**: Collects and transmits location data (simulated via a Kubernetes Deployment of a Docker container running a Python app).
+    * Simulated via a Kubernetes Deployment of a Docker container running a Python app.
 2. **IoT Hub**: Manages device communication and ingests telemetry data.
 3. **Event Hub**: Buffers and transports device telemetry messages.
 4. **Databricks**: Processes and analyzes the incoming data streams.
