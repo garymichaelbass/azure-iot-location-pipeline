@@ -1,23 +1,26 @@
-{
-  "azure_client_id": "YOUR_SERVICE_PRINCIPAL_CLIENT_ID",
-  "azure_client_secret": "YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET",
-  "azure_subscription_id": "YOUR_AZURE_SUBSCRIPTION_ID",
-  "azure_tenant_id": "YOUR_AZURE_TENANT_ID",
 
-  "grafana_admin_principal_id": "YOUR_AZURE_USER_OBJECT_ID",
 
-  "resource_group_name": "iot-location-rg-<your-unique-suffix>",
-  "location": "<azure-region>",
 
-  "iot_hub_name": "iotlocationhub-<your-unique-suffix>",
-  "iot_device_name": "truck-001",
-  "cosmos_db_name": "iotcosmosdb-<your-unique-suffix>",
-  "acr_name": "youracrname-<your-unique-suffix>",
 
-  "aks_node_count": 3,
-  "aks_node_vm_size": "Standard_DS2_v2",
-  "prefix": "iot",
-  "environment": "dev",
-  "project": "iot-simulator",
-   "owner": "<your-name>"
-}
+
+
+
+
+
+
+
+
+
+command = "az iot hub device-identity create --device-id=${var.iot_device_name} --hub-name=${azurerm_iothub.iot_hub.name} --resource-group=${azurerm_resource_group.iot_resource_group.name} --only-show-errors"
+
+command = <<EOT
+
+
+
+
+az iot hub device-identity create \
+  --device-id=${var.iot_device_name} \
+  --hub-name=${azurerm_iothub.iot_hub.name} \
+  --resource-group=${azurerm_resource_group.iot_resource_group.name} \
+  --only-show-errors
+EOT
