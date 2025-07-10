@@ -125,4 +125,5 @@ variable "grafana_admin_principal_id" {
 variable "azure_object_id" {
   type        = string
   description = "Azure AD Object ID used for role assignments or access control"
+  default     = "default"
 }
