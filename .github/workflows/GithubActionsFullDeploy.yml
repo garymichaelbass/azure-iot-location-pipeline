@@ -32,6 +32,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Ensure azure-iot CLI extension is installed
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          az extension show --name azure-iot || az extension add --name azure-iot --only-show-errors --yes
+          
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
