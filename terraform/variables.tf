@@ -121,3 +121,8 @@ variable "grafana_admin_principal_id" {
   type        = string
   sensitive   = true # Best practice for IDs that grant access
 }
+
+variable "azure_object_id" {
+  type        = string
+  description = "Azure AD Object ID used for role assignments or access control"
+}
