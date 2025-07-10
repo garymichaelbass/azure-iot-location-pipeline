@@ -8,6 +8,10 @@ It enables the generation, collection, processing, and tracking of GPS location 
 
 The solution follows a streamlined workflow:
 
+`IoT_Device -> IoT_Hub -> Event_Hub -> Databricks -> Cosmos_DB -> Grafana`
+
+![Architecture Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/Architecture.jpg)
+
 1. **IoT Device**: Establishes and transmits location data.
     * _Simulated via a Kubernetes deployment of a Docker container running a Python app_.
 2. **IoT Hub**: Manages device communication and ingests telemetry data.
@@ -16,16 +20,7 @@ The solution follows a streamlined workflow:
 5. **Cosmos DB**: Stores processed data for scalable and low-latency access.
 6. **Grafana**: Visualizes data metrics through dashboards.
 
-## Data Flow
-
-The following is the data flow for location telemetry from the IoT Device:
-
-`IoT_Device -> IoT_Hub -> Event_Hub -> Databricks -> Cosmos_DB -> Grafana`
-
-![Architecture Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/Architecture.jpg)
-
-
-## Project Structure
+## Repository Structure
 
 The repository is organized as follows:
 
@@ -36,14 +31,14 @@ The repository is organized as follows:
 ¦       +-- GithubActionsDestroy.yml    # Main CI/CD pipeline for infrastructure Terraform destroy of the current solution
 ¦       +-- GithubActionsFullDeploy.yml # Main CI/CD pipeline for infrastructure Terraform deployment and application updates
 +-- Architecture.jpg                    # High-level system architecture diagram
-+-- azure-creds.json                    # Service Principal credentials (IGNORED by Git, used by CI/CD and local setup)
++-- azure-creds.json                    # Service Principal credentials (IGNORED by Git, used for local development)
 +-- azure-creds.json.template           # Template for azure-creds.json
 +-- CONTRIBUTING.md                     # Guidelines for external contributors
 +-- LICENSE                             # Project LICENSE
-+-- README.md                           # Main Project README
++-- README.md                           # README for Main Project
 +-- README_databricks.md                # README for Databricks
 +-- iot-simulator/                      # Source code for the IoT device simulator (Python, Dockerfile)
-¦   +-- device_simulator.py             # The core device simulation logic
+¦   +-- device_simulator.py             # The core device simulation logic (Python)
 ¦   +-- Dockerfile                      # Dockerfile for containerizing the simulator
 ¦   +-- requirements.txt                # Python dependencies for the simulator
 +-- kubernetes/                         # Kubernetes manifests for deploying the simulator to AKS
@@ -52,37 +47,37 @@ The repository is organized as follows:
 ¦   +-- aks.tf                          # Azure Kubernetes Service (AKS) cluster definition
 ¦   +-- backend.tf                      # Remote backend configuration for shared tfstate
 ¦   +-- main.tf                         # Core Azure resources (IoT Hub, Event Hub, Cosmos DB, Azure Container Registry)
-¦   +-- modules.tf                      # Terraform module definitions (e.g., for Databricks, Monitoring)
+¦   +-- modules.tf                      # Terraform module definitions (Databricks, Monitoring)
 ¦   +-- outputs.tf                      # Terraform outputs for deployed resource information
-¦   +-- providers.tf                    # Terraform provider configurations (AzureRM, Databricks, Grafana)
+¦   +-- providers.tf                    # Terraform provider configurations (AzureRM, AzureAD, Databricks, Grafana)
 ¦   +-- variables.tf                    # Terraform input variables for customization
-¦   +-- terraform.tfvars.json           # Local variables file (IGNORED by Git, for local development)
+¦   +-- terraform.tfvars.json           # Local variables file (IGNORED by Git, used for local development)
 ¦   +-- terraform.tfvars.json_TEMPLATE  # Local variables file TEMPLATE for reference
 ¦   +-- modules/                        # Reusable Terraform modules
-¦       +-- databricks/                 # Databricks cluster and notebook provisioning
+¦       +-- databricks/                 # Databricks stack: Cluster and notebook provisioning
 ¦       ¦   +-- main.tf                 # Databricks module main configuration
-¦       ¦   +-- notebook.py             # Databricks notebook for data processing
+¦       ¦   +-- notebook.py             # Databricks notebook for data processing (Python)
 ¦       ¦   +-- outputs.tf              # Databricks module outputs
 ¦       ¦   +-- providers.tf            # Databricks module provider configurations
 ¦       ¦   +-- variables.tf            # Databricks module input variables
-¦       +-- monitoring/                 # Monitoring stack: Azure Monitor, Grafana, Alerts
+¦       +-- monitoring/                 # Monitoring stack: Grafana and Monitoring provisioning
 ¦           +-- dashboards/             # Grafana dashboard JSON file
-¦           +-- main.tf                 # Monitoring module main configuration (e.g., Grafana, Azure Monitor)
+¦           +-- main.tf                 # Monitoring module main configuration (Grafana, Azure Monitor)
 ¦           +-- outputs.tf              # Monitoring module outputs
 ¦           +-- variables.tf            # Monitoring module input variables
 +-- Screenshots/                        # Directory for project screenshots and visualizations
-¦   +-- 20250708_01_IoTHub_Activity.jpg
-¦   +-- 20250708_02_IoTHub_TelemetryInAndOut.jpg
-¦   +-- 20250708_03_EventHub_OutgoingBytes.jpg
-¦   +-- 20250708_04_CosmosDB_DataUsage.jpg
-¦   +-- 20250708_05_CosmosDB_SQLQuery.jpg
-¦   +-- 20250708_06_CosmosDB_SQLQuery_Items.jpg
-¦   +-- 20250708_07_Grafana_CosmosDB_Usage.jpg
-¦   +-- 20250708_08_Grafana_CosmosDB_Usage_PlusDefinitions.jpg
-¦   +-- 20250708_09_Grafana_IoTHub_TotalDeviceUsage.jpg
-¦   +-- 20250708_10_Grafana_CosmosDB_TotalRequest.jpg
-¦   +-- 20250708_11_Grafana_IoTHub_TotalDeviceUsage__CosmosDB_TotalRequests__CosmosDB_Usage.jpg
-¦   +-- 20250708_12_Grafana_Sample_CosmosDB_Data_Usage.jpg
+¦   +-- 01_IoTHub_Activity.jpg
+¦   +-- 02_IoTHub_TelemetryInAndOut.jpg
+¦   +-- 03_EventHub_OutgoingBytes.jpg
+¦   +-- 04_CosmosDB_DataUsage.jpg
+¦   +-- 05_CosmosDB_SQLQuery.jpg
+¦   +-- 06_CosmosDB_SQLQuery_Items.jpg
+¦   +-- 07_Grafana_CosmosDB_Usage.jpg
+¦   +-- 08_Grafana_CosmosDB_Usage_PlusDefinitions.jpg
+¦   +-- 09_Grafana_IoTHub_TotalDeviceUsage.jpg
+¦   +-- 10_Grafana_CosmosDB_TotalRequest.jpg
+¦   +-- 11_Grafana_Three_Panels.jpg
+¦   +-- 12_Grafana_Sample_CosmosDB_Data_Usage.jpg
 ```
 
 
@@ -117,15 +112,15 @@ The repository is organized as follows:
 
     * **GitHub Account:** With a personal access token (PAT) to perform `gh` CLI commands.
     * **Git:** Installed.
-    * **Azure Subscription**: Ensure you have an active Azure subscription.
+    * **Azure Subscription**: Active Azure subscription.
     * **Azure CLI:** Installed and configured (`az login`).
-    * **Terraform**: Installed Terraform to manage infrastructure.
+    * **Terraform**: Installed to manage infrastructure.
     * **Terraform CLI:** Installed for command line execution.
     * **Terraform Backend:** Created Azure Blob storage for Terraform state file (per ./backend.tf).
     * **Docker**: Installed to containerize the IoT simulator.
     * **Kubernetes Cluster**: Installed for deploying the simulator.
     * **kubectl**: Installed for command line execution.
-    * **jq:** Installed for as a command-line JSON processor.
+    * **jq:** Installed as a command-line JSON processor.
 
 - **Screenshots**
 
@@ -142,6 +137,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     Clone this repository to your local machine:
 
     ```bash
+    cd ~
     git clone https://github.com/garymichaelbass/azure-iot-location-pipeline.git
     cd azure-iot-location-pipeline
     ```
@@ -149,18 +145,53 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
 
   - **Step 2\. Azure Service Principal Setup**
 
+    This creates **AZURE_CLIENT_ID**, **AZURE_CLIENT_SECRET**, **AZURE_SUBSCRIPTION_ID**, **AZURE_TENANT_ID**, and **AZURE_CREDENTIALS**.
+    
     Your GitHub Actions workflow will use an Azure Service Principal (SP) to authenticate and deploy resources.
 
     Create a Service Principal with Contributor role at the subscription level:
 
     ```bash
+    cd ~/azure-iot-location-monitoring
+
     az ad sp create-for-rbac --name "github-iot-acr-pusher" --role contributor --scopes /subscriptions/<YOUR_AZURE_SUBSCRIPTION_ID> --sdk-auth > azure-creds.json
+
+    gh auth login
+
+    gh secret set AZURE_CREDENTIALS < azure-creds.json
     ```
 
-    **Important:** The `azure-creds.json` file contains sensitive credentials. Include it in your `.gitignore`. **Do NOT commit this file to your Github repository.**
+    FILENAME: azure-creds.json
+    {
+      "clientId": "<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>",
+      "clientSecret": "<YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET>",
+      "subscriptionId": "<YOUR_AZURE_SUBSCRIPTION_ID>",
+      "tenantId": "<YOUR_AZURE_TENANT_ID>",
+      "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+      "resourceManagerEndpointUrl": "https://management.azure.com/",
+      "activeDirectoryGraphResourceId": "https://graph.windows.net/",
+      "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
+      "galleryEndpointUrl": "https://gallery.azure.com/",
+      "managementEndpointUrl": "https://management.core.windows.net/"
+    }
+
+    **Important:** The `azure-creds.json` file contains sensitive credentials. Include it in your `.gitignore`.  **Do NOT commit this file to your Github repository.**
 
 
-  - **Step 3\. Databricks Token Setup**
+  - **Step 3\. Local User Principal_Id Setup**
+
+    This provides **AZURE_USER_OBJECT_ID**.
+
+    Execute the following command to get your local user account (`AZURE_USER_OBJECT_ID`) which will be used to access Grafana:
+
+    ```bash
+    az ad signed-in-user show --query id -o tsv   # output has 32 alphanumeric characters
+    XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    ```
+
+  - **Step 4\. Databricks Token Setup**
+
+    This creates **DATABRICKS_PAT_TOKEN**.
 
     Generate DATABRICKS_PAT_TOKEN as follows:
 
@@ -175,18 +206,18 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     6.	Copy the token **IMMEDIATELY** and save it somewhere safe — it’s only shown once.
 
 
-  - **Step 4\. Terraform Configuration (`terraform.tfvars.json`)**
+  - **Step 5\. Terraform Configuration (`terraform.tfvars.json`)**
 
     Customize your Azure resource names and locations by creating a `terraform.tfvars.json` file in the `terraform/` directory. This file is ignored by Git, so it's safe for local values. Feel free to use the `terraform/terraform.tfvars.json.template` as a reference.
 
     ```json
     {
-      "azure_client_id": "YOUR_SERVICE_PRINCIPAL_CLIENT_ID",
-      "azure_client_secret": "YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET",
-      "azure_subscription_id": "YOUR_AZURE_SUBSCRIPTION_ID",
-      "azure_tenant_id": "YOUR_AZURE_TENANT_ID",
+      "azure_client_id": "<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>",
+      "azure_client_secret": "<YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET>",
+      "azure_subscription_id": "<YOUR_AZURE_SUBSCRIPTION_ID>",
+      "azure_tenant_id": "<YOUR_AZURE_TENANT_ID>",
 
-      "grafana_admin_principal_id": "YOUR_AZURE_USER_OBJECT_ID",
+      "grafana_admin_principal_id": "<YOUR_AZURE_USER_OBJECT_ID>",
 
       "resource_group_name": "iot-location-rg-<your-unique-suffix>",
       "location": "<azure-region>",
@@ -208,9 +239,9 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     **Remember to replace all placeholders with your actual values.**
 
 
-  - **Step 5\. GitHub Secrets Configuration.**
+  - **Step 6\. GitHub Secrets Configuration.**
 
-    Since your `terraform.tfvars.json` file is not uploaded into Github, Github requires access to the following via Github Secrets. 
+    Since your `terraform.tfvars.json` file is not uploaded into Github, Github requires access to the following via Github Secrets:
 
     - **AZURE_CLIENT_ID**
     - **AZURE_CLIENT_SECRET**
@@ -221,7 +252,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     - **AZURE_CREDENTIALS**
     - **DATABRICKS_TOKEN**
 
-    Secrets can be added for Github access as follows:
+    Add each of your Secrets to Github with the following process:
 
     1.  Go to your GitHub repository: `https://github.com/<YOUR-REPOSITORY-NAME>/azure-iot-location-pipeline`
     2.  Navigate to **`Settings` \> `Secrets and variables` \> `Actions`**.
@@ -240,7 +271,39 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     ```
 
 
-  - **Step 6. Azure Backend Configuration**
+  - **Step 7. Microsoft.ContainerService provider Registration**
+
+    Execute the following from the command line to enable AKS cluster creation:
+
+    ```bash
+    cd ~/azure-iot-location-monitoring
+    az provider register --namespace Microsoft.ContainerService
+    ```    
+
+
+  - **Step 8. Microsoft.Dashboard provider Registration**
+
+    Execute the following from the command line to enable Grafana:
+
+    ```bash
+    cd ~/azure-iot-location-monitoring
+    az config set extension.use_dynamic_install=yes_without_prompt
+    az extension add --name azure-iot 
+    ```    
+
+
+  - **Step 9. "azure-iot" Extension Installation for IoT Device Registration**
+
+    ```bash
+    cd ~/azure-iot-location-monitoring
+    az config set extension.use_dynamic_install=yes_without_prompt
+    az extension add --name azure-iot 
+    ```    
+
+    Note: This is used in ./main.tf for the stanza of the "null_resource" resource defining "register_iot_simulator_device". 
+
+
+  - **Step 10. Azure Backend Configuration**
 
     Create a Terraform backend to store the state file by updating `terraform\backend.tf` with your create Azure Blob storage.
 
@@ -267,26 +330,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     FLOW: Storage Account Name (iotlocationmon-<your-suffix>) => Container (tfstate) => Blob Key (iot-solution.tfstate)
 
 
-  - **Step 7. Register the Microsoft.ContainerService provider**
-
-    Execute the following from the command line to enable AKS cluster creation:
-
-    ```bash
-    cd azure-iot-location-monitoring
-    az provider register --namespace Microsoft.ContainerService
-    ```    
-
-  - **Step 8. Register the Microsoft.Dashboard provider**
-
-    Execute the following from the command line to enable Grafana:
-
-    ```bash
-    cd ~/azure-iot-location-monitoring
-    az config set extension.use_dynamic_install=yes_without_prompt
-    az extension add --name azure-iot 
-    ```    
-
-  - **Step 9. Initial Local Terraform Apply (Optional but Recommended)**
+  - **Step 11. Initial Local Terraform Apply (Optional but Recommended)**
 
     It's often a good idea to perform an initial `terraform apply` locally to ensure all providers are correctly configured and to handle any one-time issues such as importing existing resources or the two-phase Databricks deployment.
 
@@ -335,7 +379,19 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
         - Refer to `README_databricks.md` for detailed instructions on setting up Databricks to process and analyze the data.
 
 
-  - **Step 10. Github Actions Deployment**
+  - **Step 12. Azure Monitor Metrics Collection for the AKS Cluster Enablement**
+
+   This uses the the iot_aks_cluster "name" parameter from the aks.tf file stanza defining the resource "azurerm_kubernetes_cluster" "iot_aks_cluster".
+   
+   Enable the Azure Monitor metrics collection for the AKS cluster by executing the following:
+
+    ```bash
+    cd ~/azure-iot-location-monitoring
+    az aks update --name <iot-aks-cluster-name> --resource-group <your-resource-group> --enable-azure-monitor-metrics
+    ```    
+
+
+  - **Step 13. Github Actions Deployment**
 
     Push the code to your own repository as follows:
     1.  Create your own Git repository as follows:
@@ -349,10 +405,9 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
        - In the Github repository, select "Actions." Select "Full IoT Solutions Deployment." Select "Deploy."
 
 
-  - **Step 11. Grafana Dashboard Setup**
+  - **Step 14. Grafana Dashboard Setup**
 
       - For reference, see the dashboard at https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com/dashboards
-
 
 
     The Grafana sample dashboard can be added as follows:
@@ -379,7 +434,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     ![Sample Grafana Dashboard Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/screenshots/20250708_12_Grafana_Sample_CosmosDB_Data_Usage.jpg)
 
 
-  - **Step 12. Usage**
+  - **Step 15. Usage**
 
     Once the infrastructure is deployed and the simulator is running, the system will:
 
@@ -389,7 +444,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     - Provide real-time Grafana dashboards for monitoring and analysis.
 
 
-  - **Step 13. Cleaning Up Resources**
+  - **Step 16. Cleaning Up Resources**
 
     To destroy all deployed Azure resources (and avoid incurring further costs):
 
