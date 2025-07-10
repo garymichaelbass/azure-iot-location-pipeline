@@ -8,17 +8,17 @@ It enables the generation, collection, processing, and tracking of GPS location 
 
 The solution follows a streamlined workflow:
 
-1. **IoT Device**: Collects and transmits location data.
-    * _Simulated via a Kubernetes Deployment of a Docker container running a Python app_.
+1. **IoT Device**: Establishes and transmits location data.
+    * _Simulated via a Kubernetes deployment of a Docker container running a Python app_.
 2. **IoT Hub**: Manages device communication and ingests telemetry data.
 3. **Event Hub**: Buffers and transports device telemetry messages.
-4. **Databricks**: Processes and analyzes the incoming data streams.
+4. **Databricks**: Processes and analyzes the incoming data stream.
 5. **Cosmos DB**: Stores processed data for scalable and low-latency access.
-6. **Grafana**: Visualizes data through dashboards.
+6. **Grafana**: Visualizes data metrics through dashboards.
 
 ## Data Flow
 
-The following is the data flow for location telemetry:
+The following is the data flow for location telemetry from the IoT Device:
 
 `IoT_Device -> IoT_Hub -> Event_Hub -> Databricks -> Cosmos_DB -> Grafana`
 
@@ -57,6 +57,7 @@ The repository is organized as follows:
 ¦   +-- providers.tf                    # Terraform provider configurations (AzureRM, Databricks, Grafana)
 ¦   +-- variables.tf                    # Terraform input variables for customization
 ¦   +-- terraform.tfvars.json           # Local variables file (IGNORED by Git, for local development)
+¦   +-- terraform.tfvars.json_TEMPLATE  # Local variables file TEMPLATE for reference
 ¦   +-- modules/                        # Reusable Terraform modules
 ¦       +-- databricks/                 # Databricks cluster and notebook provisioning
 ¦       ¦   +-- main.tf                 # Databricks module main configuration
@@ -81,6 +82,7 @@ The repository is organized as follows:
 ¦   +-- 20250708_09_Grafana_IoTHub_TotalDeviceUsage.jpg
 ¦   +-- 20250708_10_Grafana_CosmosDB_TotalRequest.jpg
 ¦   +-- 20250708_11_Grafana_IoTHub_TotalDeviceUsage__CosmosDB_TotalRequests__CosmosDB_Usage.jpg
+¦   +-- 20250708_12_Grafana_Sample_CosmosDB_Data_Usage.jpg
 ```
 
 
@@ -116,16 +118,17 @@ Before deploying this solution, ensure you have the following:
 - **Git:** Installed.
 - **Azure Subscription**: Ensure you have an active Azure subscription.
 - **Azure CLI:** Installed and configured (`az login`).
-- **Terraform**: Install Terraform to manage infrastructure.
-- **Terraform CLI:** Installed.
-- **Terraform Backend:** Azure Blob storage for Terraform state file, as referenced in azure-iot-location-monitor/backend.tf.
-- **Docker**: Required for containerizing the IoT simulator.
-- **Kubernetes Cluster**: Set up a Kubernetes cluster for deploying the simulator.
-- **jq:** A lightweight and flexible command-line JSON processor.
+- **Terraform**: Installed Terraform to manage infrastructure.
+- **Terraform CLI:** Installed for command line execution.
+- **Terraform Backend:** Created Azure Blob storage for Terraform state file (per ./backend.tf).
+- **Docker**: Installed to containerize the IoT simulator.
+- **Kubernetes Cluster**: Installed for deploying the simulator.
+- **kubectl**: Installed for command line execution.
+- **jq:** Installed for as a command-line JSON processor.
 
 ### Screenshots
 
-See the screenshots directory for sample images of IoTHub, EventHub, CosmosDB, and Grafana.
+See the screenshots directory (./screenshots) for sample images of IoTHub, EventHub, CosmosDB, and Grafana.
 
 
 ## Deployment Guide
@@ -133,7 +136,7 @@ See the screenshots directory for sample images of IoTHub, EventHub, CosmosDB, a
 The deployment is primarily automated via GitHub Actions. However, some initial setup is required.
 
 
-### 1\. Clone the Repository
+- **Step 1\. Clone the Repository**
 
 Clone this repository to your local machine:
 
@@ -143,7 +146,7 @@ cd azure-iot-location-pipeline
 ```
 
 
-### 2\. Azure Service Principal Setup
+- ** Step 2\. Azure Service Principal Setup**
 
 Your GitHub Actions workflow will use an Azure Service Principal (SP) to authenticate and deploy resources.
 
