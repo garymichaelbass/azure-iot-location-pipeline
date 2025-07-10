@@ -164,8 +164,8 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
 
     The file will be as follows:
 
-    ```json
     FILENAME: azure-creds.json
+    ```json
     {
       "clientId": "<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>",
       "clientSecret": "<YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET>",
@@ -180,7 +180,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     }
     ```
 
-    **Important:** The `azure-creds.json` file contains sensitive credentials. Include it in your `.gitignore`.  **Do NOT commit this file to your GitHub repository.** Once again people - **Do NOT commit this file to your GitHub repository.**
+    **Important:** The `azure-creds.json` file contains sensitive credentials. Include it in your `.gitignore`.  **Do NOT commit this file to your GitHub repository.** Once again people ... **do NOT commit this file to your GitHub repository.**
 
   - **Step 3\. Local User Principal_ID Setup**
 
@@ -189,7 +189,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     Execute the following command to get your hyphenated 32 alphanumeric character Object ID of your Azure AD identity (`AZURE_USER_OBJECT_ID`) which will be used to access Grafana:
 
     ```bash
-    az ad signed-in-user show --query id -o tsv   # output has hyphenated 32 alphanumeric characters
+    az ad signed-in-user show --query id -o tsv   # output has hyphenated 32 alphanumeric characters for AZURE_USER_OBJECT_ID
     # XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
     ```
 
@@ -360,7 +360,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
           → Click Generate.
           7.	Copy the token **IMMEDIATELY** and save it somewhere safe — it’s only shown once.
 
-          Use the procedure outlined in **Step 5\. GitHub Secrets Configuration**  to add the value for the newly generated `DATABRICKS_PAT_TOKEN`.
+          Use the procedure outlined in **Step 5\. GitHub Secrets Configuration**  to add the value for the newly generated `DATABRICKS_PAT_TOKEN` to the GitHub Secrets.
 
         - Refer to `README_databricks.md` for more information on the Databricks Cluster Lifecycle.
 
@@ -384,8 +384,15 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
 
   - **Step 12. Azure Monitor Metrics Collection for the AKS Cluster Enablement**
 
-      This uses the the iot_aks_cluster "name" parameter from the aks.tf file stanza defining the resource "azurerm_kubernetes_cluster" "iot_aks_cluster".
+      This uses the the iot_aks_cluster "name" parameter from the `./aks.tf` file stanza defining the resource "azurerm_kubernetes_cluster" "iot_aks_cluster".
       
+      ```markup
+      # Provision the AKS cluster
+            resource "azurerm_kubernetes_cluster" "iot_aks_cluster" {
+               name                = "${var.prefix}-aks"
+      .......
+      ```
+
       Execute the following to enable the Azure Monitor metrics collection for the AKS cluster by executing the following:
 
         ```bash
