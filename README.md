@@ -108,15 +108,12 @@ The repository is organized as follows:
     * **Azure CLI:** For Azure authentication and management.
     * **jq:** For JSON parsing in scripts. 
 
-- **Azure Services:**
-    * Azure IoT Hub
-    * Azure Event Hubs
 
-- **Setup and Deployment:**
+## Setup and Deployment
 
 - **Prerequisites**
 
-Before deploying this solution, ensure you have the following:
+    Before deploying this solution, ensure you have the following:
 
     * **GitHub Account:** With a personal access token (PAT) to perform `gh` CLI commands.
     * **Git:** Installed.
@@ -229,9 +226,9 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     1.  Go to your GitHub repository: `https://github.com/<YOUR-REPOSITORY-NAME>/azure-iot-location-pipeline`
     2.  Navigate to **`Settings` \> `Secrets and variables` \> `Actions`**.
     3.  Click **`New repository secret`**.
-    4.  Name the secret: `AZURE_CLIENT_ID` (or `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, etc.)
+    4.  Name the secret appropriately (ie, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, ...): `AZURE_CLIENT_ID`
     5.  Please note, when enterring the Value, do not enclose it in double-quotes.
-    6.  For the Value, **Copy the appropriate value** and paste it here.
+    6.  For the Value, **copy the appropriate value** and paste it here.
     7.  Click **`Add secret`**.
     8.  Repeat for all of the aforementioned secrets.
 
@@ -242,7 +239,54 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     DATABRICKS_PAT_TOKEN: ${{ secrets.DATABRICKS_PAT_TOKEN }} 
     ```
 
-  - **Step 6. Initial Local Terraform Apply (Optional but Recommended)**
+
+  - **Step 6. Azure Backend Configuration**
+
+    Create a Terraform backend to store the state file by updating `terraform\backend.tf` with your create Azure Blob storage.
+
+    ```bash
+    az group create --name <your-resource-group> --location eastus2 # Use your preferred location
+    
+    az storage account create --name iotlocationmon-<your-suffix> --resource-group <your-resource-group> --location eastus2 --sku Standard_LRS --allow-blob-public-access false# Use your preferred location
+    
+    az storage container create --name tfstate --account-name iotlocationmon-<your-suffix>
+    ```
+
+    ```markup
+    # terraform/backend.tf
+    terraform {
+      backend "azurerm" {
+        resource_group_name  = "<your-resource-group>"
+        storage_account_name = "iotlocationmon-<your-suffix>"
+        container_name       = "tfstate"
+        key                  = "iot-solution.tfstate"
+      }
+    }
+    ```
+
+    FLOW: Storage Account Name (iotlocationmon-<your-suffix>) => Container (tfstate) => Blob Key (iot-solution.tfstate)
+
+
+  - **Step 7. Register the Microsoft.ContainerService provider**
+
+    Execute the following from the command line to enable AKS cluster creation:
+
+    ```bash
+    cd azure-iot-location-monitoring
+    az provider register --namespace Microsoft.ContainerService
+    ```    
+
+  - **Step 8. Register the Microsoft.Dashboard provider**
+
+    Execute the following from the command line to enable Grafana:
+
+    ```bash
+    cd ~/azure-iot-location-monitoring
+    az config set extension.use_dynamic_install=yes_without_prompt
+    az extension add --name azure-iot 
+    ```    
+
+  - **Step 9. Initial Local Terraform Apply (Optional but Recommended)**
 
     It's often a good idea to perform an initial `terraform apply` locally to ensure all providers are correctly configured and to handle any one-time issues such as importing existing resources or the two-phase Databricks deployment.
 
@@ -271,20 +315,27 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
 
       2. **Initial IoT Simulator Deployment**:
 
+        - Navigate to the `iot-simulator/` directory.
+                
         - Build the Docker image:
 
           ```bash
+          cd iot-simulator
           docker build -t iot-simulator .
           ```
 
         - Deploy the simulator to your Kubernetes cluster using the provided `simulator-deployment.yaml`.
+
+        ```bash
+        kubectl apply -f kubernetes/simulator-deployment.yaml
+        ```
 
       3. **Initial Databricks Deployment via Command Line**:
 
         - Refer to `README_databricks.md` for detailed instructions on setting up Databricks to process and analyze the data.
 
 
-  - **Step 7. Github Actions Deployment**
+  - **Step 10. Github Actions Deployment**
 
     Push the code to your own repository as follows:
     1.  Create your own Git repository as follows:
@@ -295,10 +346,10 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
 
     2. Deploy using Github Actions
 
-      - In the Github repository, select "Actions." Select "Full IoT Solutions Deployment." Select "Deploy."
+       - In the Github repository, select "Actions." Select "Full IoT Solutions Deployment." Select "Deploy."
 
 
-  - **Step 8. Grafana Dashboard Setup**
+  - **Step 11. Grafana Dashboard Setup**
 
       - For reference, see the dashboard at https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com/dashboards
 
@@ -306,13 +357,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
 
     The Grafana sample dashboard can be added as follows:
 
-    1.  Go to your GitHub repository: `https://github.com/<YOUR-REPOSITORY-NAME>/azure-iot-location-pipeline`
-    2.  Navigate to **`Settings` \> `Secrets and variables` \> `Actions`**.
-   
-
-    Secrets can be added for Github access as follows:
-
-    1. From the Github Actions deployment under "Get Terraform Outputs", get the "grafana_endpoint (ie, https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com).
+    1. From the Github Actions deployment under "Get Terraform Outputs", get the "grafana_endpoint" (ie, https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com).
     2. In Grafana, go the left frame, click "Connections" and in the right click "Azure Monitor."
     3. In the upper right, click "Add new data source."
     4. Under Authentication, with Authentication set to "Managed Identity", click "Load Subscriptions" then select your subscription.
@@ -324,17 +369,17 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     9. Click "+ Add visualization."
     10. Select data source, choose "Azure Monitor."
     11. In the lower left, in the Resource/"Select a resource" block, click "Select a resource."
-    12. It the "search for a resource" box, enter "iot-".
-    13. Click the checkbox for "iot-cosmos-account-gmb" then click "Apply."
-    14. In the Metric dropdown, click "Data Usage." In the Aggregation select "Total." Time grain "5 minutes."
-    15. Click the upper right "Apply."  In the upper right, click "Last 6 hours" and change it to "Last one hour".
+    12. It the "search for a resource" box, enter "iot-."
+    13. Click the checkbox for "iot-cosmos-account-<your-suffix>" then click "Apply."
+    14. In the Metric dropdown, click "Data Usage." In the Aggregation select "Total." Set time grain "5 minutes."
+    15. Click the upper right "Apply."  In the upper right, click "Last 6 hours" and change it to "Last one hour."
     16. In the upper right click "Save". Assign a Title and Description of "Sample CosmosDB Usage". Click the blue "Save."
     17. **Shazam!** You now have a sample Grafana dashboard.
 
     ![Sample Grafana Dashboard Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/screenshots/20250708_12_Grafana_Sample_CosmosDB_Data_Usage.jpg)
 
 
-  - **Step 9. Usage**
+  - **Step 12. Usage**
 
     Once the infrastructure is deployed and the simulator is running, the system will:
 
@@ -344,17 +389,19 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     - Provide real-time Grafana dashboards for monitoring and analysis.
 
 
-  - **Step 10. Cleaning Up Resources**
+  - **Step 13. Cleaning Up Resources**
 
     To destroy all deployed Azure resources (and avoid incurring further costs):
 
     1.  From your `terraform/` directory:
-    
+
         ```bash
         cd terraform/
         terraform destroy -auto-approve
         ```
         This command will remove all resources managed by your Terraform configuration.
+
+        This can also be done from Github via the "Terraform Destroy" action.
 
 ## Contributing
 
