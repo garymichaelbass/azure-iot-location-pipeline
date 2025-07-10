@@ -386,19 +386,19 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
 
       This uses the the iot_aks_cluster "name" parameter from the `./aks.tf` file stanza defining the resource "azurerm_kubernetes_cluster" "iot_aks_cluster".
       
-      ```markup
-      # Provision the AKS cluster
-            resource "azurerm_kubernetes_cluster" "iot_aks_cluster" {
-               name                = "${var.prefix}-aks"
-      .......
-      ```
+        ```markup
+        # Provision the AKS cluster
+              resource "azurerm_kubernetes_cluster" "iot_aks_cluster" {
+                name                = "${var.prefix}-aks"
+        .......
+        ```
 
       Execute the following to enable the Azure Monitor metrics collection for the AKS cluster by executing the following:
 
-        ```bash
-        cd ~/azure-iot-location-monitoring
-        az aks update --name <iot-aks-cluster-name> --resource-group <your-resource-group> --enable-azure-monitor-metrics
-        ```    
+          ```bash
+          cd ~/azure-iot-location-monitoring
+          az aks update --name <iot-aks-cluster-name> --resource-group <your-resource-group> --enable-azure-monitor-metrics
+          ```    
 
 
   - **Step 13. GitHub Actions Deployment**

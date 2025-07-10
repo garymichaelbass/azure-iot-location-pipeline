@@ -40,27 +40,39 @@ jobs:
         # extract the lock ID, perform force-unlock, then return the terraform destroy command.
         run: |
           cd terraform
-
-          # Define the terraform destroy command as a shell array on a single line.
-          # Populate the variables per the GitHub secrets.
-          DESTROY_COMMAND=(terraform destroy -auto-approve \
+          echo "Attempting terraform destroy..."
+          terraform destroy -auto-approve \
             -var="azure_client_id=${{ secrets.AZURE_CLIENT_ID }}" \
             -var="azure_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
             -var="azure_tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
             -var="azure_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
-            -var="grafana_admin_principal_id=${{ secrets.AZURE_USER_OBJECT_ID }}")
+            -var="grafana_admin_principal_id=${{ secrets.AZURE_USER_OBJECT_ID }}"
+            
+        # working-directory: terraform/ # Assuming your terraform files are in the 'terraform' directory
 
-          echo "Attempting initial terraform destroy..."
 
-          # Execute the destroy command using the array.
-          # Capture both stdout and stderr, and get the exit code.
-          # 'set +e' temporarily disables exiting on error for this subshell,
-          # allowing explicit checking of the exit code and processing of the output.
-          set +e
-          # "${DESTROY_COMMAND[@]}" expands the array elements as separate, properly quoted arguments.
-          OUTPUT=$("${DESTROY_COMMAND[@]}" 2>&1)
-          DESTROY_EXIT_CODE=$?
-          set -e # Re-enable exiting on error, so any subsequent command failures will fail the step.
+                  # # Define the terraform destroy command as a shell array on a single line.
+          # # Populate the variables per the GitHub secrets.
+          # DESTROY_COMMAND=(terraform destroy -auto-approve \
+          #   -var="azure_client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+          #   -var="azure_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+          #   -var="azure_tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
+          #   -var="azure_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          #   -var="grafana_admin_principal_id=${{ secrets.AZURE_USER_OBJECT_ID }}")
 
-          # Print the captured output for debugging and visibility in GitHub Actions logs.
-          echo "$OUTPUT"
+          # echo "Attempting initial terraform destroy..."
+
+          # # Execute the destroy command using the array.
+          # # Capture both stdout and stderr, and get the exit code.
+          # # 'set +e' temporarily disables exiting on error for this subshell,
+          # # allowing explicit checking of the exit code and processing of the output.
+          # set +e
+          # # "${DESTROY_COMMAND[@]}" expands the array elements as separate, properly quoted arguments.
+          # OUTPUT=$("${DESTROY_COMMAND[@]}" 2>&1)
+          # DESTROY_EXIT_CODE=$?
+          # set -e # Re-enable exiting on error, so any subsequent command failures will fail the step.
+
+          # # Print the captured output for debugging and visibility in GitHub Actions logs.
+          # echo "$OUTPUT"
+
+          # # ... (other parts of your workflow, e.g., permissions, jobs, steps) ...
