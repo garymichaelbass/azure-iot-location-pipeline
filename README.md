@@ -191,24 +191,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     # XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
     ```
 
-  - **Step 4\. Databricks Token Setup**
-
-    This creates **DATABRICKS_PAT_TOKEN**.
-
-    Generate DATABRICKS_PAT_TOKEN as follows:
-
-    1.	Go to your Databricks workspace: https://adb-XXXXXXXXXXXXXXXX.14.azuredatabricks.net
-    2.	Click your user icon in the top right
-    → Select Settings
-    3.	In the left, click Developer tab:
-    → To right of "Access tokens" at the top, click Manage
-    4.	Click "Generate new token."
-    5.	Add a name ("GitHubActionsToken") and set expiration to "365" days.
-    → Click Generate.
-    6.	Copy the token **IMMEDIATELY** and save it somewhere safe — it’s only shown once.
-
-
-  - **Step 5\. Terraform Configuration (`terraform.tfvars.json`)**
+   - **Step 4\. Terraform Configuration (`terraform.tfvars.json`)**
 
     Customize your Azure resource names and locations by creating a `terraform.tfvars.json` file in the `terraform/` directory. This file is ignored by Git, so it's safe for local values. Feel free to use the `terraform/terraform.tfvars.json.template` as a reference.
 
@@ -241,7 +224,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     **Remember to replace all placeholders with your actual values.**
 
 
-  - **Step 6\. GitHub Secrets Configuration.**
+  - **Step 5\. GitHub Secrets Configuration.**
 
     Since your `terraform.tfvars.json` file is not uploaded into Github, Github requires access to the following via Github Secrets:
 
@@ -252,7 +235,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     - **AZURE_USER_OBJECT_ID**
 
     - **AZURE_CREDENTIALS**
-    - **DATABRICKS_TOKEN**
+    - **DATABRICKS_TOKEN** (This one will be added later)
 
     Add each of your Secrets to Github with the following process:
 
@@ -273,7 +256,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     ```
 
 
-  - **Step 7. Microsoft.ContainerService Provider Registration**
+  - **Step 6. Microsoft.ContainerService Provider Registration**
 
     Execute the following from the command line to enable AKS cluster creation:
 
@@ -283,7 +266,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     ```    
 
 
-  - **Step 8. Microsoft.Dashboard Provider Registration**
+  - **Step 7. Microsoft.Dashboard Provider Registration**
 
     Execute the following from the command line to enable Grafana:
 
@@ -294,7 +277,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     ```    
 
 
-  - **Step 9. "azure-iot" Extension Installation for IoT Device Registration**
+  - **Step 8. "azure-iot" Extension Installation for IoT Device Registration**
 
     Execute the following from the command line to enable the azure-iot extension:
 
@@ -307,7 +290,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     Note: This is used in ./main.tf for the stanza of the "null_resource" resource defining "register_iot_simulator_device". 
 
 
-  - **Step 10. Azure Backend Configuration**
+  - **Step 9. Azure Backend Configuration**
 
     Execute the following to create a Terraform backend Azure Blob storage to store the state file.
     
@@ -336,11 +319,26 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     Storage Flow: Storage Account Name (iotlocationmon-<your-suffix>) => Container (tfstate) => Blob Key (iot-solution.tfstate)
 
 
-  - **Step 11. Initial Local Terraform Apply (Optional but Recommended)**
+  - **Step 10. Initial Local Terraform Apply (Optional but Recommended)**
 
     It's often a good idea to perform an initial `terraform apply` locally to ensure all providers are correctly configured and to handle any one-time issues such as importing existing resources or the two-phase Databricks deployment.
 
     - **Important for Databricks:** If this is the *very first* time deploying, the `terraform apply` might fail when it tries to create Databricks cluster/notebook/job resources. This is because the Databricks provider needs the Databricks Workspace URL (which isn't known until the `azurerm_databricks_workspace` is fully deployed). If it fails, simply run `terraform apply -auto-approve`. This run should succeed.
+
+    Once the Databrick cluster has been established, execute the following to get the **DATABRICKS_PAT_TOKEN**:
+
+    1. Change directory to `terraform` and execute `terraform output`, noting the output for `databricks_workspace_url`.
+    2. Go to the Databricks workspace at `https://<databricks_workspace_url>` (eg, https://adb-XXXXXXXXXXXXXXXX.14.azuredatabricks.net).
+    3.	Click your user icon in the top right
+    → Select Settings
+    4.	In the left, click Developer tab:
+    → To right of "Access tokens" at the top, click Manage
+    5.	Click "Generate new token."
+    6.	Add a name ("GitHubActionsToken") and set expiration to "365" days.
+    → Click Generate.
+    7.	Copy the token **IMMEDIATELY** and save it somewhere safe — it’s only shown once.
+
+    Use the procedure outlined in **Step 5\. GitHub Secrets Configuration.**  to add the value for the newly generated `DATABRICKS_PAT_TOKEN`.
 
     - **For AKS Extensions/Resource Providers:** Ensure you have registered the necessary resource providers if prompted (i.e., `az provider register --namespace Microsoft.ContainerService`, `az provider register --namespace Microsoft.Dashboard`).
 
@@ -374,7 +372,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
           docker build -t iot-simulator .
           ```
 
-        - Execute the following to deploy the simulator to your Kubernetes cluster using the provided `simulator-deployment.yaml`.
+        - Execute the following to deploy the simulator to your Kubernetes cluster using the provided `simulator-deployment.yaml`:
 
           ```bash
           kubectl apply -f kubernetes/simulator-deployment.yaml
@@ -387,14 +385,14 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
 
   - **Step 12. Azure Monitor Metrics Collection for the AKS Cluster Enablement**
 
-    This uses the the iot_aks_cluster "name" parameter from the aks.tf file stanza defining the resource "azurerm_kubernetes_cluster" "iot_aks_cluster".
-    
-    Execute the following to enable the Azure Monitor metrics collection for the AKS cluster by executing the following:
+      This uses the the iot_aks_cluster "name" parameter from the aks.tf file stanza defining the resource "azurerm_kubernetes_cluster" "iot_aks_cluster".
+      
+      Execute the following to enable the Azure Monitor metrics collection for the AKS cluster by executing the following:
 
-      ```bash
-      cd ~/azure-iot-location-monitoring
-      az aks update --name <iot-aks-cluster-name> --resource-group <your-resource-group> --enable-azure-monitor-metrics
-      ```    
+        ```bash
+        cd ~/azure-iot-location-monitoring
+        az aks update --name <iot-aks-cluster-name> --resource-group <your-resource-group> --enable-azure-monitor-metrics
+        ```    
 
 
   - **Step 13. Github Actions Deployment**
