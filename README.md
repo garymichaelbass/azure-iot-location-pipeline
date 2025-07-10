@@ -8,8 +8,6 @@ It enables the generation, collection, processing, and tracking of GPS location 
 
 The solution data flow is as follows:
 
-`IoT_Device -> IoT_Hub -> Event_Hub -> Databricks -> Cosmos_DB -> Grafana`
-
 ![Architecture Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/Architecture.jpg)
 
 1. **IoT Device**: Establishes and transmits GPS location data.
@@ -110,7 +108,7 @@ The repository is organized as follows:
 
     Before deploying this solution, ensure you have the following:
 
-    * **GitHub Account:** With a personal access token (PAT) to perform `gh` CLI commands.
+    * **GitHub Account:** Active GitHub account with a personal access token (PAT) to perform `gh` CLI commands.
     * **Git:** Installed.
     * **Azure Subscription**: Active Azure subscription.
     * **Azure CLI:** Installed and configured (`az login`).
@@ -139,6 +137,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     ```bash
     cd ~
     git clone https://github.com/garymichaelbass/azure-iot-location-pipeline.git
+    rename azure-iot-location-pipeline-main azure-iot-location-pipeline
     cd azure-iot-location-pipeline
     ```
 
@@ -154,12 +153,16 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     ```bash
     cd ~/azure-iot-location-monitoring
 
+    az account show --query id -o tsv  # get <YOUR-AZURE_SUBSCRIPTION_ID>
+
     az ad sp create-for-rbac --name "github-iot-acr-pusher" --role contributor --scopes /subscriptions/<YOUR_AZURE_SUBSCRIPTION_ID> --sdk-auth > azure-creds.json
 
     gh auth login
 
     gh secret set AZURE_CREDENTIALS < azure-creds.json
     ```
+
+    The file will be as follows:
 
     ```json
     FILENAME: azure-creds.json
@@ -177,56 +180,55 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     }
     ```
 
-    **Important:** The `azure-creds.json` file contains sensitive credentials. Include it in your `.gitignore`.  **Do NOT commit this file to your Github repository.**
+    **Important:** The `azure-creds.json` file contains sensitive credentials. Include it in your `.gitignore`.  **Do NOT commit this file to your GitHub repository.** Once again people - **Do NOT commit this file to your GitHub repository.**
 
-
-  - **Step 3\. Local User Principal_Id Setup**
+  - **Step 3\. Local User Principal_ID Setup**
 
     This provides **AZURE_USER_OBJECT_ID**.
 
-    Execute the following command to get your hyphenated 32 alphanumeric character local user account (`AZURE_USER_OBJECT_ID`) which will be used to access Grafana:
+    Execute the following command to get your hyphenated 32 alphanumeric character Object ID of your Azure AD identity (`AZURE_USER_OBJECT_ID`) which will be used to access Grafana:
 
     ```bash
-    az ad signed-in-user show --query id -o tsv   # output has 32 alphanumeric characters
+    az ad signed-in-user show --query id -o tsv   # output has hyphenated 32 alphanumeric characters
     # XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
     ```
 
    - **Step 4\. Terraform Configuration (`terraform.tfvars.json`)**
 
-    Customize your Azure resource names and locations by creating a `terraform.tfvars.json` file in the `terraform/` directory. This file is ignored by Git, so it's safe for local values. Feel free to use the `terraform/terraform.tfvars.json.template` as a reference.
+      Customize your Azure resource names and locations by creating a `terraform.tfvars.json` file in the `terraform/` directory. This file is ignored by Git, so it's safe for local values. Feel free to use the `terraform/terraform.tfvars.json.template` as a reference.
 
-    ```json
-    {
-      "azure_client_id": "<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>",
-      "azure_client_secret": "<YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET>",
-      "azure_subscription_id": "<YOUR_AZURE_SUBSCRIPTION_ID>",
-      "azure_tenant_id": "<YOUR_AZURE_TENANT_ID>",
+      ```json
+      {
+        "azure_client_id": "<YOUR_SERVICE_PRINCIPAL_CLIENT_ID>",
+        "azure_client_secret": "<YOUR_SERVICE_PRINCIPAL_CLIENT_SECRET>",
+        "azure_subscription_id": "<YOUR_AZURE_SUBSCRIPTION_ID>",
+        "azure_tenant_id": "<YOUR_AZURE_TENANT_ID>",
 
-      "grafana_admin_principal_id": "<YOUR_AZURE_USER_OBJECT_ID>",
+        "grafana_admin_principal_id": "<YOUR_AZURE_USER_OBJECT_ID>",
 
-      "resource_group_name": "iot-location-rg-<your-unique-suffix>",
-      "location": "<azure-region>",
+        "resource_group_name": "iot-location-rg-<your-unique-suffix>",
+        "location": "<azure-region>",
 
-      "iot_hub_name": "iotlocationhub-<your-unique-suffix>",
-      "iot_device_name": "truck-001",
-      "cosmos_db_name": "iotcosmosdb-<your-unique-suffix>",
-      "acr_name": "youracrname-<your-unique-suffix>",
+        "iot_hub_name": "iotlocationhub-<your-unique-suffix>",
+        "iot_device_name": "truck-001",
+        "cosmos_db_name": "iotcosmosdb-<your-unique-suffix>",
+        "acr_name": "youracrname-<your-unique-suffix>",
 
-      "aks_node_count": 3,
-      "aks_node_vm_size": "Standard_DS2_v2",
-      "prefix": "iot",
-      "environment": "dev",
-      "project": "iot-simulator",
-      "owner": "<your-name>"
-    }
-    ```
+        "aks_node_count": 3,
+        "aks_node_vm_size": "Standard_DS2_v2",
+        "prefix": "iot",
+        "environment": "dev",
+        "project": "iot-simulator",
+        "owner": "<your-name>"
+      }
+      ```
 
-    **Remember to replace all placeholders with your actual values.**
+      **Remember to replace all placeholders with your actual values.**
 
 
   - **Step 5\. GitHub Secrets Configuration.**
 
-    Since your `terraform.tfvars.json` file is not uploaded into Github, Github requires access to the following via Github Secrets:
+    Since your `terraform.tfvars.json` file is not uploaded into GitHub, GitHub requires access to the following via GitHub Secrets, all of which have now been established except for DATABRICKS_TOKEN:
 
     - **AZURE_CLIENT_ID**
     - **AZURE_CLIENT_SECRET**
@@ -237,18 +239,19 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     - **AZURE_CREDENTIALS**
     - **DATABRICKS_TOKEN** (This one will be added later)
 
-    Add each of your Secrets to Github with the following process:
+    Add each of your Secrets to GitHub with the following process:
 
     1.  Go to your GitHub repository: `https://github.com/<YOUR-REPOSITORY-NAME>/azure-iot-location-pipeline`
     2.  Navigate to **`Settings` \> `Secrets and variables` \> `Actions`**.
     3.  Click **`New repository secret`**.
     4.  Name the secret appropriately (ie, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, ...): `AZURE_CLIENT_ID`
-    5.  Please note, when enterring the Value, do not enclose it in double-quotes.
-    6.  For the Value, **copy the appropriate value** and paste it here.
-    7.  Click **`Add secret`**.
-    8.  Repeat for all of the aforementioned secrets.
+    5.  Please note, when enterring the Value for `AZURE_CREDENTIALS`, the first line will be `{` and the last line will be `}`.
+    6.  For all of the other Secrets, when enterring the Value, do not enclose it in double-quotes.
+    7.  For the Value, **copy the appropriate value** and paste it here.
+    8.  Click **`Add secret`**.
+    9.  Repeat for all of the aforementioned secrets.
 
-    From there, your GitHub Actions workflow will be able to access the appropriate variable via the following method:
+    From there, your GitHub Actions workflow will be able to access the appropriate variable via the following example method:
 
     ```yaml
     env: 
@@ -296,10 +299,8 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     
     ```bash
     az group create --name <your-resource-group> --location eastus2 # Use your preferred location
-    
-    az storage account create --name iotlocationmon-<your-suffix> --resource-group <your-resource-group> --location eastus2 --sku Standard_LRS --allow-blob-public-access false# Use your preferred location
-    
-    az storage container create --name tfstate --account-name iotlocationmon-<your-suffix>
+        az storage account create --name iotlocationmon-<your-suffix> --resource-group <your-resource-group> --location eastus2 --sku Standard_LRS --allow-blob-public-access false# Use your preferred location
+        az storage container create --name tfstate --account-name iotlocationmon-<your-suffix>
     ```
 
     Update `terraform\backend.tf` with your created Azure Blob storage.
@@ -316,7 +317,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     }
     ```
 
-    Storage Flow: Storage Account Name (iotlocationmon-<your-suffix>) => Container (tfstate) => Blob Key (iot-solution.tfstate)
+    Please note, the storage flow is as follows: Storage Account Name (`iotlocationmon-<your-suffix>`) => Container (`tfstate`) => Blob Key (`iot-solution.tfstate`)
 
 
   - **Step 10. Initial Local Terraform Apply (Optional but Recommended)**
@@ -324,21 +325,6 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     It's often a good idea to perform an initial `terraform apply` locally to ensure all providers are correctly configured and to handle any one-time issues such as importing existing resources or the two-phase Databricks deployment.
 
     - **Important for Databricks:** If this is the *very first* time deploying, the `terraform apply` might fail when it tries to create Databricks cluster/notebook/job resources. This is because the Databricks provider needs the Databricks Workspace URL (which isn't known until the `azurerm_databricks_workspace` is fully deployed). If it fails, simply run `terraform apply -auto-approve`. This run should succeed.
-
-    Once the Databrick cluster has been established, execute the following to get the **DATABRICKS_PAT_TOKEN**:
-
-    1. Change directory to `terraform` and execute `terraform output`, noting the output for `databricks_workspace_url`.
-    2. Go to the Databricks workspace at `https://<databricks_workspace_url>` (eg, https://adb-XXXXXXXXXXXXXXXX.14.azuredatabricks.net).
-    3.	Click your user icon in the top right
-    → Select Settings
-    4.	In the left, click Developer tab:
-    → To right of "Access tokens" at the top, click Manage
-    5.	Click "Generate new token."
-    6.	Add a name ("GitHubActionsToken") and set expiration to "365" days.
-    → Click Generate.
-    7.	Copy the token **IMMEDIATELY** and save it somewhere safe — it’s only shown once.
-
-    Use the procedure outlined in **Step 5\. GitHub Secrets Configuration.**  to add the value for the newly generated `DATABRICKS_PAT_TOKEN`.
 
     - **For AKS Extensions/Resource Providers:** Ensure you have registered the necessary resource providers if prompted (i.e., `az provider register --namespace Microsoft.ContainerService`, `az provider register --namespace Microsoft.Dashboard`).
 
@@ -359,7 +345,24 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
           terraform apply
           ```
 
-        - This will create the necessary Azure resources, including IoT Hub, Event Hub, Databricks workspace, Cosmos DB, and Grafana.
+        - This will create the necessary Azure resources, including IoT Hub, Event Hub, Cosmos DB, and Grafana; however, if this is the first deployment, the Databricks Workspace URL has just been deployed so now you are able to generate the DATABRICKS_PAT_TOKEN. 
+        
+          Once the Databrick URL has been established, execute the following to get the **DATABRICKS_PAT_TOKEN**:
+
+          1. Change directory to `terraform` and execute `terraform output`, noting the output for `databricks_workspace_url`.
+          2. Go to the Databricks workspace at `https://<databricks_workspace_url>` (eg, https://adb-XXXXXXXXXXXXXXXX.14.azuredatabricks.net).
+          3.	Click your user icon in the top right
+          → Select Settings
+          4.	In the left, click Developer tab:
+          → To right of "Access tokens" at the top, click Manage
+          5.	Click "Generate new token."
+          6.	Add a name ("GitHubActionsToken") and set expiration to "365" days.
+          → Click Generate.
+          7.	Copy the token **IMMEDIATELY** and save it somewhere safe — it’s only shown once.
+
+          Use the procedure outlined in **Step 5\. GitHub Secrets Configuration**  to add the value for the newly generated `DATABRICKS_PAT_TOKEN`.
+
+        - Refer to `README_databricks.md` for more information on the Databricks Cluster Lifecycle.
 
       2. **Initial IoT Simulator Deployment**:
 
@@ -378,10 +381,6 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
           kubectl apply -f kubernetes/simulator-deployment.yaml
           ```
 
-      3. **Initial Databricks Deployment via Command Line**:
-
-        - Refer to `README_databricks.md` for detailed instructions on setting up Databricks to process and analyze the data.
-
 
   - **Step 12. Azure Monitor Metrics Collection for the AKS Cluster Enablement**
 
@@ -395,20 +394,20 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
         ```    
 
 
-  - **Step 13. Github Actions Deployment**
+  - **Step 13. GitHub Actions Deployment**
 
     Push the code to your own repository as follows:
 
     1.  Execute the following to create your own Git repository:
 
         ```bash
-        cd azure-iot-location-monitoring/
+        cd ~/azure-iot-location-monitoring/
         git remote add origin https://github.com/<YOUR-GITHUB-ACCOUNT>/azure-iot-location-pipeline.git
         ```
 
-    2. Deploy using Github Actions
+    2. Deploy using GitHub Actions:
 
-       - In the Github repository, select "Actions." Select "Full IoT Solutions Deployment." Select "Deploy."
+       - In the GitHub repository, select "Actions." Select "Full IoT Solutions Deployment." Select "Deploy."
 
 
   - **Step 14. Grafana Dashboard Setup**
@@ -418,7 +417,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
 
     **The Grafana sample dashboard can be added as follows:**
 
-    1. From the Github Actions deployment under "Get Terraform Outputs", get the "grafana_endpoint" (ie, https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com).
+    1. From the GitHub Actions deployment under "Get Terraform Outputs", get the "grafana_endpoint" (ie, https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com).
     2. In Grafana, go the left frame, click "Connections" and in the right click "Azure Monitor."
     3. In the upper right, click "Add new data source."
     4. Under Authentication, with Authentication set to "Managed Identity", click "Load Subscriptions" then select your subscription.
@@ -462,7 +461,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
         ```
         This command will remove all resources managed by your Terraform configuration.
 
-        This can also be done from Github via the "Terraform Destroy" action.
+        This can also be done from GitHub via the "Terraform Destroy" action.
 
 ## Contributing
 
