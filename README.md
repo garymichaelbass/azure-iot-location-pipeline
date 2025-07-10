@@ -106,29 +106,33 @@ The repository is organized as follows:
     * **Python:** For the IoT device simulator and Databricks notebook.
     * **kubectl:** For Kubernetes cluster interaction.
     * **Azure CLI:** For Azure authentication and management.
-    * **jq:** For JSON parsing in scripts.
+    * **jq:** For JSON parsing in scripts. 
 
-## Setup and Deployment
+- **Azure Services:**
+    * Azure IoT Hub
+    * Azure Event Hubs
 
-### Prerequisites
+- **Setup and Deployment:**
+
+- **Prerequisites**
 
 Before deploying this solution, ensure you have the following:
 
-- **GitHub Account:** With a personal access token (PAT) to perform `gh` CLI commands.
-- **Git:** Installed.
-- **Azure Subscription**: Ensure you have an active Azure subscription.
-- **Azure CLI:** Installed and configured (`az login`).
-- **Terraform**: Installed Terraform to manage infrastructure.
-- **Terraform CLI:** Installed for command line execution.
-- **Terraform Backend:** Created Azure Blob storage for Terraform state file (per ./backend.tf).
-- **Docker**: Installed to containerize the IoT simulator.
-- **Kubernetes Cluster**: Installed for deploying the simulator.
-- **kubectl**: Installed for command line execution.
-- **jq:** Installed for as a command-line JSON processor.
+    * **GitHub Account:** With a personal access token (PAT) to perform `gh` CLI commands.
+    * **Git:** Installed.
+    * **Azure Subscription**: Ensure you have an active Azure subscription.
+    * **Azure CLI:** Installed and configured (`az login`).
+    * **Terraform**: Installed Terraform to manage infrastructure.
+    * **Terraform CLI:** Installed for command line execution.
+    * **Terraform Backend:** Created Azure Blob storage for Terraform state file (per ./backend.tf).
+    * **Docker**: Installed to containerize the IoT simulator.
+    * **Kubernetes Cluster**: Installed for deploying the simulator.
+    * **kubectl**: Installed for command line execution.
+    * **jq:** Installed for as a command-line JSON processor.
 
-### Screenshots
+- **Screenshots**
 
-See the screenshots directory (./screenshots) for sample images of IoTHub, EventHub, CosmosDB, and Grafana.
+    See the screenshots directory (./screenshots) for sample images of IoTHub, EventHub, CosmosDB, and Grafana.
 
 
 ## Deployment Guide
@@ -136,7 +140,7 @@ See the screenshots directory (./screenshots) for sample images of IoTHub, Event
 The deployment is primarily automated via GitHub Actions. However, some initial setup is required.
 
 
-  - **Step 1\. Clone the Repository**
+  - **Step 1\. Repository Cloning**
 
     Clone this repository to your local machine:
 
@@ -207,18 +211,18 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     **Remember to replace all placeholders with your actual values.**
 
 
-  - **Step 5\. GitHub Secrets Configuration.
+  - **Step 5\. GitHub Secrets Configuration.**
 
     Since your `terraform.tfvars.json` file is not uploaded into Github, Github requires access to the following via Github Secrets. 
 
-    - AZURE_CLIENT_ID
-    - AZURE_CLIENT_SECRET
-    - AZURE_SUBSCRIPTION_ID
-    - AZURE_TENANT_ID
-    - AZURE_USER_OBJECT_ID
+    - **AZURE_CLIENT_ID**
+    - **AZURE_CLIENT_SECRET**
+    - **AZURE_SUBSCRIPTION_ID**
+    - **AZURE_TENANT_ID**
+    - **AZURE_USER_OBJECT_ID**
 
-    - AZURE_CREDENTIALS
-    - DATABRICKS_TOKEN
+    - **AZURE_CREDENTIALS**
+    - **DATABRICKS_TOKEN**
 
     Secrets can be added for Github access as follows:
 
@@ -306,25 +310,26 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     2.  Navigate to **`Settings` \> `Secrets and variables` \> `Actions`**.
    
 
+    Secrets can be added for Github access as follows:
 
-    `- From the Github Actions deployment under "Get Terraform Outputs", get the "grafana_endpoint (ie, https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com).
-    - In Grafana, go the left frame, click "Connections" and in the right click "Azure Monitor."
-    - In the upper right, click "Add new data source."
-    - Under Authentication, with Authentication set to "Managed Identity", click "Load Subscriptions" then select your subscription.
-    - Click "Save & test."
-    - Note confirmation message of "Successfully connected to all Azure Monitor endpoints."
+    1. From the Github Actions deployment under "Get Terraform Outputs", get the "grafana_endpoint (ie, https://iot-grafana-bkhzftaab0dqd8en.eus2.grafana.azure.com).
+    2. In Grafana, go the left frame, click "Connections" and in the right click "Azure Monitor."
+    3. In the upper right, click "Add new data source."
+    4. Under Authentication, with Authentication set to "Managed Identity", click "Load Subscriptions" then select your subscription.
+    5. Click "Save & test."
+    6. Note confirmation message of "Successfully connected to all Azure Monitor endpoints."
 
-    - In the left panel, click on Dashboards.
-    - In the upper right, drop down the blue "New" icon and select "New dashboard."
-    - Click "+ Add visualization."
-    - Select data source, choose "Azure Monitor."
-    - In the lower left, in the Resource/"Select a resource" block, click "Select a resource."
-    - It the "search for a resource" box, enter "iot-".
-    - Click the checkbox for "iot-cosmos-account-gmb" then click "Apply."
-    - In the Metric dropdown, click "Data Usage." In the Aggregation select "Total." Time grain "5 minutes."
-    - Click the upper right "Apply."  In the upper right, click "Last 6 hours" and change it to "Last one hour".
-    - In the upper right click "Save". Assign a Title and Description of "Sample CosmosDB Usage". Click the blue "Save."
-    - **Shazam!** You now have a sample Grafana dashboard.
+    7. In the left panel, click on Dashboards.
+    8. In the upper right, drop down the blue "New" icon and select "New dashboard."
+    9. Click "+ Add visualization."
+    10. Select data source, choose "Azure Monitor."
+    11. In the lower left, in the Resource/"Select a resource" block, click "Select a resource."
+    12. It the "search for a resource" box, enter "iot-".
+    13. Click the checkbox for "iot-cosmos-account-gmb" then click "Apply."
+    14. In the Metric dropdown, click "Data Usage." In the Aggregation select "Total." Time grain "5 minutes."
+    15. Click the upper right "Apply."  In the upper right, click "Last 6 hours" and change it to "Last one hour".
+    16. In the upper right click "Save". Assign a Title and Description of "Sample CosmosDB Usage". Click the blue "Save."
+    17. **Shazam!** You now have a sample Grafana dashboard.
 
     ![Sample Grafana Dashboard Diagram](https://github.com/garymichaelbass/azure-iot-location-pipeline/blob/main/screenshots/20250708_12_Grafana_Sample_CosmosDB_Data_Usage.jpg)
 
@@ -344,6 +349,7 @@ The deployment is primarily automated via GitHub Actions. However, some initial 
     To destroy all deployed Azure resources (and avoid incurring further costs):
 
     1.  From your `terraform/` directory:
+    
         ```bash
         cd terraform/
         terraform destroy -auto-approve
