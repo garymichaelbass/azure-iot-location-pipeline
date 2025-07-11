@@ -47,6 +47,8 @@ jobs:
             -var="azure_tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
             -var="azure_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
             -var="grafana_admin_principal_id=${{ secrets.AZURE_USER_OBJECT_ID }}"
+
+          echo "terraform destroy command execution completed ..."
             
         # working-directory: terraform/ # Assuming your terraform files are in the 'terraform' directory
 
